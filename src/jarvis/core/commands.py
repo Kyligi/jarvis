@@ -5,12 +5,21 @@ from jarvis.modules.monitoring import system_status
 from jarvis.memory.database import remember
 from jarvis.commands import handle_system_command
 from jarvis.registry import dispatch
-
+from jarvis.projects.manager import handle_project_command
 
 def execute(command: str) -> str:
     text = " ".join(command.lower().strip().split())
     if not text:
         return "Écris une commande."
+    # V0.7 — Gestionnaire de projets
+    try:
+        project_result = handle_project_command(command)
+
+        if project_result is not None:
+            return project_result
+
+    except Exception as error:
+        return f"Erreur gestionnaire de projets : {error}"
     # Jarvis V0.4 : registre et monitoring
     try:
         registry_result = dispatch(command)

@@ -68,11 +68,6 @@ COMMANDS = [
         ("active le mode Travail",),
     ),
     Command(
-        "reprends mon projet Rust",
-        "Retrouver et ouvrir un projet Rust",
-        ("reprends mon projet Rust",),
-    ),
-    Command(
         "projets Rust",
         "Lister les projets Rust disponibles",
         ("projets Rust",),
@@ -82,7 +77,6 @@ COMMANDS = [
         "Ouvrir un projet Rust par son nom",
         ("ouvre rust NOM",),
     ),
-
     Command(
         "capteurs",
         "Afficher les températures AMD et les autres capteurs Linux",
@@ -93,7 +87,6 @@ COMMANDS = [
         ),
         sensors_text,
     ),
-
     Command(
         "historique",
         "Afficher les statistiques CPU/RAM de la dernière heure",
@@ -104,7 +97,6 @@ COMMANDS = [
         ),
         history_text,
     ),
-
     Command(
         "pourquoi mon pc ralentit",
         "Analyser les ressources, températures et processus",
@@ -115,6 +107,52 @@ COMMANDS = [
             "mon pc est lent",
         ),
         explain_slowdown,
+    ),
+
+    # JARVIS V0.7 — PROJECT MANAGER
+    Command(
+        "mes projets",
+        "Lister les projets Rust et Python",
+        ("mes projets",),
+    ),
+    Command(
+        "reprends mon projet Rust",
+        "Reprendre le dernier projet Rust utilisé",
+        ("reprends mon projet Rust",),
+    ),
+    Command(
+        "reprends mon projet Python",
+        "Reprendre le dernier projet Python utilisé",
+        ("reprends mon projet Python",),
+    ),
+    Command(
+        "ouvre projet NOM",
+        "Ouvrir un projet par son nom exact",
+        ("ouvre projet NOM",),
+    ),
+
+    Command(
+        "projet actif",
+        "Afficher le dernier projet ouvert",
+        ("projet actif",),
+    ),
+
+    Command(
+        "état git",
+        "Afficher la branche, le commit et les modifications",
+        ("état git",),
+    ),
+
+    Command(
+        "objectif projet : TEXTE",
+        "Mémoriser le prochain objectif du projet actif",
+        ("objectif projet : TEXTE",),
+    ),
+
+    Command(
+        "sessions projets",
+        "Afficher les dix dernières reprises de projets",
+        ("sessions projets",),
     ),
 ]
 
@@ -131,7 +169,7 @@ def normalize(text: str) -> str:
 
 def help_text() -> str:
     lines = [
-        "J.A.R.V.I.S. V0.6 — COMMANDES DISPONIBLES",
+        "J.A.R.V.I.S. V0.7 — COMMANDES DISPONIBLES",
         "",
         "MONITORING",
         "Dashboard temps réel, historique SQLite et alertes.",
