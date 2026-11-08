@@ -1,3 +1,86 @@
+# Validation V1.2
+
+## Résultat automatisé
+
+- Référence avant modification : **147 tests V1.1 réussis**.
+- V1.2 : **233 tests réussis**, sortie pytest 0. Tous les anciens scénarios sont
+  conservés ; les assertions de navigation ont été adaptées de six à sept pages.
+- `uv sync --locked`, `uv run pytest -q`,
+  `uv run python -m compileall -q src/jarvis`, `git diff --check` : réussis.
+- Aucun outil de qualité supplémentaire configuré dans le dépôt. Pas de mesure de
+  couverture en pourcentage : couverture fonctionnelle décrite ci-dessous.
+- Hyprland **0.56.2** vérifié en lecture ; constructeurs Lua focus, float on/off,
+  move workspace, move position, resize et center acceptés via assertions dans
+  `hyprctl eval`, **sans `hl.dispatch`**. Aucun placement réel testé.
+- Script `jarvis-toggle`, bindings et configuration Hyprland lus ou laissés intacts.
+- Tests Hyprland simulés, sous-processus réels interdits par les fixtures et Qt hors écran.
+- Un premier passage affichait 226 succès mais sortait avec un segfault lors du
+  nettoyage Qt des nouveaux tests ; destruction explicite des widgets ajoutée aux
+  fixtures concernées, puis suite complète terminée avec code 0.
+
+Couverture ajoutée : JSON invalide, inventaire, recherches classe/titre/adresse et
+accents, ambiguïté, disparition/remplacement de cible, bureaux et paramètres typés,
+allowlist Lua et injections refusées, Jarvis et workspace spécial, plein écran,
+placement flottant/HiDPI, contrôle à chaque étape, confirmations expirées/consommées,
+organisation modifiée, erreurs partielles, Notion webapp, déduplication des modes,
+page Fenêtres (sélection, conservation, disparition, vide, erreur, actions en worker,
+verrou partagé), registre/aide/alias et navigation à sept pages.
+
+La V1.0 et la V1.1 ont été déclarées validées manuellement par l’utilisateur.
+**La recette manuelle V1.2 ci-dessous n’a pas été effectuée par l’agent.**
+
+## Recette manuelle V1.2 sur Omarchy
+
+Utiliser des fenêtres de test et terminer/enregistrer le travail avant de confirmer
+une disposition. Ne pas tester de déplacement sur une partie de jeu en cours.
+
+- [ ] Démarrer `uv run jarvis`, vérifier V1.2 dans `aide` et Paramètres ; ouvrir HUD.
+- [ ] SUPER+SHIFT+J : masquer/réafficher Mini depuis plusieurs workspaces, HUD ouvert
+  puis fermé ; vérifier les classes distinctes, `special:jarvis` et l’absence de doublon.
+- [ ] Naviguer vers **07 Fenêtres**, comparer workspaces, moniteurs, classes et titres
+  avec le bureau réel. Actualiser, y compris après fermeture/ouverture d’une application.
+- [ ] Ouvrir deux Foot. `focus Foot` doit demander un choix sans action ; choisir
+  l’une dans Fenêtres, puis Focus. Tester aussi `focus ADRESSE` et `où est Foot`.
+- [ ] Déplacer une fenêtre de test vers le bureau 3. `bureau 3`, suivant/précédent
+  doivent agir sur le moniteur courant ; vérifier aussi l’ancien `passe au workspace 2`.
+- [ ] Sélectionner une fenêtre puis la fermer avant une action : message explicite,
+  aucune action sur une autre fenêtre. Tester une erreur Hyprland via mocks seulement.
+- [ ] Mettre Foot à gauche puis à droite : vérifier le passage en flottant et la zone
+  utile, aussi sur écran externe/HiDPI/rotation. Repasser en mosaïque et vérifier le
+  layout actif ; l’ordre exact en mosaïque n’est pas garanti.
+- [ ] Centrer une flottante. Depuis la console, Mini peut être la fenêtre active et
+  sera protégée : utiliser le bouton Centrer sur une sélection dans Fenêtres.
+- [ ] Demander une disposition Développement puis Annuler : aucun déplacement.
+  Refaire et saisir `confirme disposition CODE` : éditeur/Foot existants sur 3.
+  Tester un code expiré (60 s), réutilisé et un changement manuel avant confirmation.
+- [ ] Études : Notion webapp à gauche, Chrome à droite sur 5 ; application absente ou
+  plusieurs candidates signalées, aucun lancement par la disposition. Vérifier le mode
+  Études et `gtk-launch notion` seulement si Notion n’est pas déjà ouvert.
+- [ ] Gaming : seul Steam est candidat sur 4, jeux et plein écran conservés.
+- [ ] `organise mon bureau` : examiner puis confirmer la liste ; Jarvis, HUD et fenêtres
+  plein écran sont absents du plan. Vérifier les messages en cas d’application partielle.
+- [ ] Relancer les modes Travail/Gaming/Études : workspaces 3/4/5, pas de duplication
+  d’applications déjà ouvertes. Une fenêtre existante ailleurs reste à sa place ; utiliser
+  une disposition confirmée pour la déplacer.
+- [ ] Ouvrir puis reprendre un projet Rust/Python et une session de test, vérifier les
+  fichiers suivis et le répertoire du terminal ; aucune donnée ou configuration écrasée.
+- [ ] Pendant les actions/lectures, naviguer et masquer/réouvrir le HUD : GUI réactive.
+  Fermer Mini pendant une lecture : arrêt propre après attente des workers.
+
+## Limites V1.2
+
+Les constructeurs Lua acceptés ne prouvent pas le résultat géométrique réel. Les
+contraintes d’application et règles locales restent prioritaires. La relecture avant
+chaque mutation n’est pas une transaction IPC atomique. Les dispositions ne font pas
+de rollback ; elles s’arrêtent au premier échec et signalent les étapes déjà tentées.
+Pas de lancement par les dispositions, pas de permutation précise en tiling, pas de
+modification du HUD/Mini par le gestionnaire. La déduplication des modes ne garantit
+pas le répertoire de travail d’une fenêtre existante ; projets et sessions gardent
+leurs lancements spécifiques historiques. La sélection HUD reste la voie fiable
+lorsque la fenêtre active est l’interface Jarvis elle-même.
+
+---
+
 # Validation V1.1 et référence V1.0
 
 ## Résultat V1.1

@@ -1,9 +1,10 @@
-# J.A.R.V.I.S. V1.1 — Nebula
+# J.A.R.V.I.S. V1.2 — Fenêtres Omarchy
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
-La V1.1 ajoute **Jarvis HUD**, un centre de contrôle à six pages, et modernise
-**Jarvis Mini** avec le thème Nebula. La base V1.0 et ses 30 commandes sont conservées.
+La V1.2 ajoute le contrôle des fenêtres et une septième page **Fenêtres** au HUD
+Nebula. Les 30 commandes historiques restent disponibles ; 20 commandes couvrent
+l’inventaire, les actions ciblées et les dispositions avec confirmation.
 Les versions suivantes restent planifiées dans [la roadmap](docs/ROADMAP.md).
 
 ## Installation et démarrage
@@ -54,8 +55,13 @@ et HUD partagent une seule commande en cours, les réponses et un seul collecteu
 Chaque vue conserve au maximum 500 blocs de réponses en mémoire. Les pages inactives
 ne lancent pas de lectures périodiques ; le monitoring continue pour les alertes.
 
-Aucune nouvelle commande textuelle n'est ajoutée : `aide` couvre toujours les
-30 commandes. L'ouverture du HUD est une action de fenêtre via le bouton Mini.
+La page **Fenêtres** affiche les workspaces, le bureau courant, les moniteurs et
+les fenêtres regroupées (classe, titre, état, adresse). Sélectionner une fenêtre
+permet de lui donner le focus, choisir sa destination, la rendre flottante ou
+mosaïque, ou la centrer. Les lectures et actions utilisent des workers ; Actualiser
+recharge l’inventaire. Une erreur efface la sélection et une cible fermée est refusée.
+Les boutons de disposition affichent un plan dans la console : y saisir le code de
+confirmation fourni. `aide` expose automatiquement les **50 commandes**.
 
 ### Préférences Nebula
 
@@ -75,8 +81,7 @@ mesures consécutives, donc leur délai dépend de l'intervalle choisi.
 
 Le HUD utilise la classe Wayland `jarvis-hud`, Mini conserve `jarvis`. Cette séparation
 a été contrôlée nativement sur Qt 6.12 / Hyprland 0.56.2, sans modifier le script ni
-les bindings. La recette avec le workspace spécial et le raccourci reste à effectuer
-pour la V1.1 ; l'identité distincte dépend du backend **Qt Wayland natif**, pas XWayland.
+les bindings. La V1.1 a été validée manuellement par l’utilisateur ; la recette V1.2 reste à effectuer ; l'identité distincte dépend du backend **Qt Wayland natif**, pas XWayland.
 
 ## Configuration
 
@@ -106,6 +111,9 @@ et les accents des chemins et objectifs sont préservés.
 | Aide | `aide` (`help`, `commandes`) |
 | Monitoring | `état système` (`statut`, `status`, `monitoring`, `état du pc`), `processus`, `diagnostic`, `batterie`, `capteurs`, `historique`, `pourquoi mon pc ralentit` |
 | Omarchy | `ouvre un terminal`, `passe au workspace 2` (1 à 9 ; bureau/espace acceptés) |
+| Fenêtres | `mes fenêtres`, `fenêtre active`, `mes bureaux`, `bureau 3`, `bureau suivant`, `bureau précédent`, `focus APPLICATION`, `où est APPLICATION` |
+| Placement | `déplace APPLICATION au bureau N`, `mets APPLICATION à gauche`, `mets APPLICATION à droite`, `centre la fenêtre`, `fenêtre flottante`, `fenêtre mosaïque` |
+| Dispositions | `organise mon bureau`, `disposition développement`, `disposition études`, `disposition gaming`, `confirme disposition CODE`, `annule disposition` |
 | Projets | `mes projets`, `projets Rust`, `reprends mon projet Rust`, `reprends mon projet Python`, `ouvre projet NOM`, `ouvre rust NOM`, `projet actif`, `état git`, `objectif projet : TEXTE`, `sessions projets` |
 | Sessions | `suis le fichier CHEMIN`, `mes fichiers suivis`, `sauvegarde ma session`, `reprends ma session`, `état session` |
 | Modes | `mode Travail`, `mode Gaming`, `mode Études`, `mode actuel`, `mes modes` ; `active le mode …` reste accepté |
@@ -160,3 +168,41 @@ conformément au comportement historique.
 Pas d'IA, voix, Spotify, domotique ou autonomie dans cette version.
 Voir [ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les responsabilités, la sécurité
 et les compromis de compatibilité.
+
+## Placement et protections V1.2
+
+`APPLICATION` recherche la classe ou le titre, sans distinction de casse/accents.
+Plusieurs correspondances produisent une liste : choisir dans Fenêtres ou remplacer
+APPLICATION par l’adresse exacte affichée, par exemple `focus 0x123abc`.
+Les destinations explicites restent bornées à 1–9 ; suivant/précédent utilise les
+workspaces du moniteur courant (`m+1` / `m-1`). Les bureaux spéciaux sont lisibles.
+
+Les placements gauche/droite passent **en flottant**, utilisent la moitié de la
+zone utile du moniteur, son échelle, sa rotation et ses réservations. Les contraintes
+minimales des applications et règles Hyprland peuvent limiter la géométrie obtenue.
+Le mode **mosaïque** rend le placement au layout Hyprland ; aucun ordre exact n’est
+garanti. Centrer exige déjà une fenêtre flottante. Redimensionnement et positionnement
+arbitraires sont disponibles dans le service typé, sans interpréteur Lua libre.
+
+Développement prépare l’éditeur à gauche et Foot à droite sur le bureau 3 ; Études
+prépare Notion à gauche et Chrome à droite sur le 5 ; Gaming déplace uniquement Steam
+sur le 4. Notion est reconnu aussi par sa classe webapp `chrome-www.notion.so__-Default`.
+Ces dispositions ne lancent rien : les applications absentes ou ambiguës sont signalées.
+Les modes historiques peuvent toujours lancer les applications manquantes, dont
+**`gtk-launch notion`**, et conservent les positions des applications déjà ouvertes.
+Un inventaire indisponible évite un lancement potentiellement dupliqué.
+
+Toute disposition collective exige le code de confirmation, à usage unique et valable
+60 secondes ; un nouveau plan remplace le précédent. `organise mon bureau` remet en
+mosaïque les fenêtres admissibles du bureau courant. Les plans ignorent Jarvis et les
+fenêtres en plein écran. Les actions refusent aussi les fenêtres devenues plein écran.
+Un échec arrête les étapes restantes et signale les modifications partielles possibles,
+sans rollback susceptible de perturber davantage le bureau.
+
+Les classes `jarvis`, `jarvis-hud` et le workspace `special:jarvis` sont protégés,
+y compris contre les actions individuelles de cette version. Aucun kill, fermeture,
+changement de résolution, raccourci ou fichier de configuration n’est exposé.
+Depuis la console, la fenêtre active peut être Mini/HUD : utiliser alors la sélection
+explicite de la page Fenêtres. Les sessions et ouvertures de projets conservent leur
+comportement validé : la déduplication globale d’éditeur/terminal concerne les modes,
+pas la reprise de fichiers ou de répertoires de projets différents.

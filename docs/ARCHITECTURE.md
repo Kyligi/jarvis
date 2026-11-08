@@ -1,4 +1,4 @@
-# Architecture V1.1
+# Architecture V1.2
 
 ## Deux fenêtres et un contexte partagé
 
@@ -15,7 +15,7 @@ HudWindow (classe jarvis-hud) ────┘    ├─ CommandBus → Runner �
 
 Les deux fenêtres utilisent Qt Widgets et le thème central `interface/theme.py`.
 `interface/components.py` fournit les cartes, labels en texte brut et la console.
-Les six pages sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
+Les sept pages sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
 ni dispatcher Hyprland. `services/overview.py` réutilise les services métier et
 assemble les lectures nécessaires à la présentation.
 
@@ -31,8 +31,7 @@ masque via Hyprland et ne recrée pas Mini.
 `CommandConsole` appelle `CommandBus.submit`, qui utilise exactement
 `core.commands.execute` et `registry.resolve`. Une seule commande est acceptée à
 la fois pour les deux fenêtres. Boutons des modes/sessions/projets et actions rapides
-soumettent des formulations déjà enregistrées. Aucun second interpréteur ni nouvelle
-commande textuelle. Les réponses et l'état occupé sont diffusés aux deux consoles.
+soumettent des formulations déjà enregistrées. Aucun second interpréteur ; les commandes de fenêtres sont enregistrées au même endroit. Les réponses et l'état occupé sont diffusés aux deux consoles.
 
 `MonitorHub` détient un seul `Collector`, `Runner`, timer et historique de 60 mesures.
 Les vues consomment des snapshots et ne mesurent rien elles-mêmes. La page Système
@@ -174,3 +173,42 @@ Les signaux et workers suivent la
 [documentation QThread](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QThread.html).
 La recette du raccourci et du workspace spécial reste nécessaire ; le backend
 XWayland n'est pas couvert par cette séparation d'identité.
+
+## Service de fenêtres V1.2
+
+`services/windows.py` sépare les lectures JSON (`read`, `windows`, `active`,
+`snapshot`), le modèle immutable `Window`, la validation de cible (`validate`),
+la construction autorisée (`build_action`) et l’exécution (`act`). Les anciennes
+formes workspace restent dans `integrations/desktop.py`, derrière `service.switch` :
+commandes, modes et sessions passent désormais par cette façade commune.
+
+Seules les lectures clients/activewindow/activeworkspace/workspaces/monitors sont
+admises. Les actions Lua autorisées sont focus, move, float, tile, center, resize,
+position. Les adresses sont hexadécimales, les bureaux des entiers 1–9, les coordonnées
+et dimensions des entiers bornés ; aucun nom ou titre utilisateur entre dans Lua.
+Les sous-processus ont un timeout de cinq secondes et n’utilisent pas de shell.
+
+Avant chaque action, une nouvelle lecture vérifie adresse, PID, classe, protection
+et plein écran. Cette vérification réduit la course fermeture/action ; le protocole
+IPC ne fournit pas ici de transaction atomique ni de garantie contre toute réutilisation
+d’adresse. Les actions composées peuvent réussir partiellement et ne sont pas annulées.
+
+`services/window_commands.py` présente les réponses, gère les ambiguïtés et construit
+un `Plan` immutable (fenêtres, destination, action, expiration, jeton). La confirmation
+consomme le plan, revalide toutes ses fenêtres et leur organisation, puis exécute les
+étapes avec une nouvelle validation par action. Les fenêtres absentes/ambiguës sont
+signalées avant confirmation. La classe webapp Notion est normalisée uniquement pour
+la reconnaissance applicative ; le titre n’est jamais utilisé pour la déduplication.
+
+`interface/pages/windows.py` réutilise `DataPage` pour charger en worker. Les items
+Qt portent des objets Window, pas un index susceptible de pointer une autre fenêtre.
+`CommandBus.submit_operation` partage le verrou et le runner des commandes textuelles
+pour les actions typées du HUD ; Mini et HUD ne peuvent pas lancer deux mutations en
+parallèle. L’interface invalide ses données après une erreur, conserve une sélection
+seulement si adresse/PID/classe correspondent, et recharge après une commande.
+Les dispositions passent par le registre et leur confirmation explicite dans la console.
+
+API Qt vérifiée avec la documentation officielle
+[QTreeWidget](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QTreeWidget.html).
+Les constructeurs Lua ont été vérifiés sur l’installation 0.56.2 par des assertions
+sans `hl.dispatch`. Cette vérification ne constitue pas une recette de placement réel.
