@@ -10,7 +10,14 @@ from jarvis.monitoring.system import (
     top_processes,
     diagnose,
 )
+from jarvis.monitoring.intelligence import (
+    sensors_text,
+    history_text,
+)
 
+from jarvis.monitoring.diagnostics import (
+    explain_slowdown,
+)
 
 @dataclass(frozen=True)
 class Command:
@@ -75,6 +82,40 @@ COMMANDS = [
         "Ouvrir un projet Rust par son nom",
         ("ouvre rust NOM",),
     ),
+
+    Command(
+        "capteurs",
+        "Afficher les températures AMD et les autres capteurs Linux",
+        (
+            "capteurs",
+            "températures",
+            "temperatures",
+        ),
+        sensors_text,
+    ),
+
+    Command(
+        "historique",
+        "Afficher les statistiques CPU/RAM de la dernière heure",
+        (
+            "historique",
+            "historique performances",
+            "historique système",
+        ),
+        history_text,
+    ),
+
+    Command(
+        "pourquoi mon pc ralentit",
+        "Analyser les ressources, températures et processus",
+        (
+            "pourquoi mon pc ralentit",
+            "analyse mon pc",
+            "diagnostic avancé",
+            "mon pc est lent",
+        ),
+        explain_slowdown,
+    ),
 ]
 
 
@@ -90,15 +131,17 @@ def normalize(text: str) -> str:
 
 def help_text() -> str:
     lines = [
-        "J.A.R.V.I.S. V0.5 — COMMANDES DISPONIBLES",
+        "J.A.R.V.I.S. V0.6 — COMMANDES DISPONIBLES",
         "",
-        "DASHBOARD : monitoring automatique toutes les 2 secondes.",
+        "MONITORING",
+        "Dashboard temps réel, historique SQLite et alertes.",
         "",
     ]
 
     for command in COMMANDS:
         lines.append(
-            f"• {command.name}\n  {command.description}"
+            f"• {command.name}\n"
+            f"  {command.description}"
         )
 
     return "\n".join(lines)

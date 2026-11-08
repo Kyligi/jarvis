@@ -1,8 +1,15 @@
-
 from collections import deque
 from pathlib import Path
 
 import psutil
+import sqlite3
+import time
+
+from jarvis.monitoring.intelligence import (
+    AlertEngine,
+    save_metrics,
+    read_sensors,
+)
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QColor, QPainter, QPen
@@ -154,6 +161,9 @@ class MonitorDashboard(QWidget):
 
         # Premier appel : initialise la mesure CPU.
         psutil.cpu_percent(interval=None)
+        # Jarvis V0.6 — Surveillance intelligente
+        self.alerts = AlertEngine()
+        self.last_saved = 0.0
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
@@ -166,6 +176,38 @@ class MonitorDashboard(QWidget):
         ram = psutil.virtual_memory()
         disk = psutil.disk_usage(str(Path.home()))
         battery = psutil.sensors_battery()
+
+        # ==========================================
+        # V0.6 — ALERTES INTELLIGENTES
+        # ==========================================
+
+        self.alerts.check(
+            cpu,
+            ram.percent,
+            disk.percent,
+        )
+
+        # ==========================================
+        # V0.6 — HISTORIQUE SQLITE
+        # ==========================================
+
+        now = time.monotonic()
+
+        if now - self.last_saved >= 10:
+            try:
+                save_metrics(
+                    cpu,
+                    ram.percent,
+                    disk.percent,
+                )
+
+                self.last_saved = now
+
+            except (sqlite3.Error, OSError) as error:
+                print(
+                    "Jarvis : erreur sauvegarde :",
+                    error,
+                )
 
         self.cpu.set_value(cpu)
         self.ram.set_value(ram.percent)
@@ -182,27 +224,26 @@ class MonitorDashboard(QWidget):
 
         self.graph.add_values(cpu, ram.percent)
 
-        # Les capteurs disponibles varient selon le PC.
-        try:
-            sensors = psutil.sensors_temperatures() or {}
-            temperatures = [
-                entry.current
-                for entries in sensors.values()
-                for entry in entries
-                if entry.current is not None
-                and 0 < entry.current < 150
-            ]
 
-            if temperatures:
-                self.temperature.setText(
-                    "Température max des capteurs : "
-                    f"{max(temperatures):.1f} °C"
+        # ==========================================
+        # V0.6 — TEMPÉRATURES AMD
+        # ==========================================
+
+        sensors = read_sensors()
+
+        if sensors:
+            temperatures = []
+
+            for name, value in sensors.items():
+                temperatures.append(
+                    f"{name} : {value:.1f} °C"
                 )
-            else:
-                self.temperature.setText(
-                    "Températures indisponibles"
-                )
-        except (AttributeError, OSError):
+
+            self.temperature.setText(
+                "\n".join(temperatures[:6])
+            )
+
+        else:
             self.temperature.setText(
                 "Capteurs de température indisponibles"
             )
