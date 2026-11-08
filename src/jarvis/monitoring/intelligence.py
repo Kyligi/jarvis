@@ -1,8 +1,9 @@
 
-import sqlite3
+import logging
+from jarvis.persistence.sqlite import connect
+from jarvis.config import settings
 import subprocess
 import time
-from pathlib import Path
 
 import psutil
 
@@ -11,10 +12,7 @@ import psutil
 # CONFIGURATION
 # =========================================================
 
-DB_PATH = (
-    Path.home()
-    / ".local/share/jarvis/performance.db"
-)
+DB_PATH = settings.data_dir / "performance.db"
 
 CPU_LIMIT = 90
 RAM_LIMIT = 90
@@ -95,7 +93,7 @@ def init_database() -> None:
         exist_ok=True,
     )
 
-    with sqlite3.connect(DB_PATH) as db:
+    with connect(DB_PATH) as db:
         db.execute("""
             CREATE TABLE IF NOT EXISTS metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,7 +121,7 @@ def save_metrics(
 
     now = int(time.time())
 
-    with sqlite3.connect(DB_PATH) as db:
+    with connect(DB_PATH) as db:
         db.execute(
             """
             INSERT INTO metrics
@@ -160,7 +158,7 @@ def history_text() -> str:
 
     since = int(time.time()) - 3600
 
-    with sqlite3.connect(DB_PATH) as db:
+    with connect(DB_PATH) as db:
         row = db.execute(
             """
             SELECT
@@ -216,8 +214,7 @@ def notify(title: str, message: str) -> None:
         )
 
     except OSError:
-        # Pas de notification si notify-send est absent.
-        pass
+        logging.getLogger(__name__).warning("notification_unavailable")
 
 
 # =========================================================

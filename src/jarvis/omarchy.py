@@ -1,23 +1,13 @@
+from jarvis.integrations.desktop import focus_workspace
 
 import shutil
 import subprocess
-
-
-def hyprland(lua_command: str) -> str:
-    """Exécute un dispatcher Lua Hyprland prédéfini."""
-    result = subprocess.run(
-        ["hyprctl", "dispatch", lua_command],
-        capture_output=True,
-        text=True,
-        timeout=5,
-        check=True,
-    )
-    return result.stdout.strip()
+from jarvis.config import settings
 
 
 def open_terminal() -> str:
     """Ouvre Foot sans passer par un shell."""
-    executable = shutil.which("foot")
+    executable = shutil.which(settings.terminal)
     if not executable:
         return "Foot n'est pas installé."
 
@@ -33,33 +23,11 @@ def change_workspace(number: int) -> str:
     if not 1 <= number <= 9:
         return "Le workspace doit être compris entre 1 et 9."
 
-    hyprland(f"hl.dsp.focus({{workspace={number}}})")
+    focus_workspace(number, "command")
     return f"Workspace {number} activé."
 
 
 def work_mode() -> str:
-    """Lance les outils du mode Travail."""
-    applications = ["foot", "code"]
-
-    launched = []
-    missing = []
-
-    for app in applications:
-        executable = shutil.which(app)
-        if executable:
-            subprocess.Popen(
-                [executable],
-                start_new_session=True,
-            )
-            launched.append(app)
-        else:
-            missing.append(app)
-
-    message = "Mode Travail activé : " + (
-        ", ".join(launched) if launched else "aucune application lancée"
-    )
-
-    if missing:
-        message += ". Applications absentes : " + ", ".join(missing)
-
-    return message
+    """Compatibilité : un seul service pour le mode Travail."""
+    from jarvis.modes.manager import activate_mode
+    return activate_mode("travail")

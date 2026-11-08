@@ -1,0 +1,16 @@
+# Copier vers ~/.config/jarvis/config.toml ou définir JARVIS_CONFIG.
+# Chargement au démarrage ; redémarrer Jarvis après modification.
+projects_root = "~/Projects"
+data_dir = "~/.local/share/jarvis"
+editors = ["code", "codium", "cursor"]
+rust_editors = ["code", "codium", "zed", "cursor"]
+terminal = "foot"
+browsers = ["google-chrome-stable", "google-chrome", "chromium"]
+gaming = "steam"
+desktop_launcher = "gtk-launch"
+notion_desktop = "notion"
+
+[workspaces]
+travail = 3
+gaming = 4
+etudes = 5

@@ -1,16 +1,18 @@
 
 import os
-import re
 import shutil
-import sqlite3
 import subprocess
 import time
-import unicodedata
 from pathlib import Path
 from contextlib import contextmanager
 
-PROJECTS_ROOT = Path.home() / "Projects"
-DB_PATH = Path.home() / ".local/share/jarvis/projects.db"
+from jarvis.config import settings
+from jarvis.persistence.sqlite import connect
+from jarvis.core.text import normalize_words as normalize
+from jarvis.integrations.git import read_git as git
+
+PROJECTS_ROOT = settings.projects_root
+DB_PATH = settings.data_dir / "projects.db"
 
 SKIP_DIRS = {
     ".git", ".venv", "venv", "node_modules",
@@ -25,10 +27,7 @@ SKIP_DIRS = {
 
 @contextmanager
 def database():
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DB_PATH)
-
-    try:
+    with connect(DB_PATH) as connection:
         connection.execute("""
             CREATE TABLE IF NOT EXISTS projects (
                 path TEXT PRIMARY KEY,
@@ -44,19 +43,7 @@ def database():
                 opened_at INTEGER NOT NULL
             )
         """)
-        connection.commit()
-
-        with connection:
-            yield connection
-    finally:
-        connection.close()
-
-def normalize(text):
-    value = unicodedata.normalize("NFKD", text.lower())
-    return "".join(
-        c for c in value
-        if not unicodedata.combining(c)
-    ).strip()
+        yield connection
 
 
 # =====================================================
@@ -129,26 +116,6 @@ def list_projects():
 # =====================================================
 # GIT
 # =====================================================
-
-def git(path, *args):
-    """Lecture Git, sans shell ni modification du dépôt."""
-
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(path), *args],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-
-    if result.returncode != 0:
-        return None
-
-    return result.stdout.strip()
-
 
 def git_summary(path):
     branch = git(path, "branch", "--show-current")
@@ -228,7 +195,7 @@ def get_active_project(language=None):
 def open_editor(path):
     """Ouvre un éditeur installé sans passer par un shell."""
 
-    for app in ("code", "codium", "cursor"):
+    for app in settings.editors:
         executable = shutil.which(app)
         if executable:
             try:
@@ -458,41 +425,7 @@ def recent_sessions():
 # INTERPRÉTEUR DE COMMANDES V0.7
 # =====================================================
 
-def handle_project_command(message):
-    text = normalize(message)
-    text = re.sub(r"^jarvis[\s,:]*", "", text)
-
-    if text in ("mes projets", "liste mes projets"):
-        return list_projects()
-
-    if text in (
-        "reprends mon projet rust",
-        "reprendre mon projet rust",
-    ):
-        return resume_language("Rust")
-
-    if text in (
-        "reprends mon projet python",
-        "reprendre mon projet python",
-    ):
-        return resume_language("Python")
-
-    if text.startswith("ouvre projet "):
-        name = text[len("ouvre projet "):].strip()
-        return open_named_project(name)
-
-    if text == "projet actif":
-        return active_project_text()
-
-    if text in ("etat git", "git status"):
-        return active_git()
-
-    if text.startswith("objectif projet :"):
-        return set_objective(
-            message.split(":", 1)[1]
-        )
-
-    if text == "sessions projets":
-        return recent_sessions()
-
-    return None
+def handle_project_command(message: str) -> str | None:
+    """Compatibilité des imports V0.7 ; résolution centralisée."""
+    from jarvis.registry import dispatch
+    return dispatch(message, category="Projets")

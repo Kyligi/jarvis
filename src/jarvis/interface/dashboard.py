@@ -1,20 +1,11 @@
 from collections import deque
-from pathlib import Path
+from jarvis.interface.workers import Runner
+from jarvis.monitoring.collector import Collector
 
-import psutil
-import sqlite3
-import time
-
-from jarvis.monitoring.intelligence import (
-    AlertEngine,
-    save_metrics,
-    read_sensors,
-)
-
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QProgressBar, QGridLayout
 )
 
@@ -159,11 +150,11 @@ class MonitorDashboard(QWidget):
             }
         """)
 
-        # Premier appel : initialise la mesure CPU.
-        psutil.cpu_percent(interval=None)
-        # Jarvis V0.6 — Surveillance intelligente
-        self.alerts = AlertEngine()
-        self.last_saved = 0.0
+        self.collector = Collector()
+        self.runner = Runner(self)
+        self.runner.result.connect(self.apply_snapshot)
+        self.runner.failed.connect(self.show_error)
+        QApplication.instance().aboutToQuit.connect(self.runner.shutdown)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
@@ -171,47 +162,20 @@ class MonitorDashboard(QWidget):
 
         self.refresh()
 
+    @Slot()
     def refresh(self):
-        cpu = psutil.cpu_percent(interval=None)
-        ram = psutil.virtual_memory()
-        disk = psutil.disk_usage(str(Path.home()))
-        battery = psutil.sensors_battery()
+        self.runner.start(self.collector.collect)
 
-        # ==========================================
-        # V0.6 — ALERTES INTELLIGENTES
-        # ==========================================
+    @Slot(str)
+    def show_error(self, error):
+        self.temperature.setText(f"Monitoring indisponible : {error}")
 
-        self.alerts.check(
-            cpu,
-            ram.percent,
-            disk.percent,
-        )
-
-        # ==========================================
-        # V0.6 — HISTORIQUE SQLITE
-        # ==========================================
-
-        now = time.monotonic()
-
-        if now - self.last_saved >= 10:
-            try:
-                save_metrics(
-                    cpu,
-                    ram.percent,
-                    disk.percent,
-                )
-
-                self.last_saved = now
-
-            except (sqlite3.Error, OSError) as error:
-                print(
-                    "Jarvis : erreur sauvegarde :",
-                    error,
-                )
-
+    @Slot(object)
+    def apply_snapshot(self, snapshot):
+        cpu, ram, disk, battery = snapshot.cpu, snapshot.ram, snapshot.disk, snapshot.battery
         self.cpu.set_value(cpu)
-        self.ram.set_value(ram.percent)
-        self.disk.set_value(disk.percent)
+        self.ram.set_value(ram)
+        self.disk.set_value(disk)
 
         if battery is None:
             self.battery.set_value(0, "Non détectée")
@@ -222,14 +186,14 @@ class MonitorDashboard(QWidget):
                 + (" ⚡" if battery.power_plugged else "")
             )
 
-        self.graph.add_values(cpu, ram.percent)
+        self.graph.add_values(cpu, ram)
 
 
         # ==========================================
         # V0.6 — TEMPÉRATURES AMD
         # ==========================================
 
-        sensors = read_sensors()
+        sensors = snapshot.sensors
 
         if sensors:
             temperatures = []
@@ -247,3 +211,6 @@ class MonitorDashboard(QWidget):
             self.temperature.setText(
                 "Capteurs de température indisponibles"
             )
+
+        if snapshot.warning:
+            self.temperature.setText(self.temperature.text() + "\n" + snapshot.warning)

@@ -1,203 +1,177 @@
-
-import re
-import unicodedata
+"""Catalogue unique : résolution sans effets de bord, aide et handlers explicites."""
 from dataclasses import dataclass
-from typing import Callable
+import re
+from collections.abc import Callable
 
-from jarvis.monitoring.system import (
-    system_status,
-    battery_status,
-    top_processes,
-    diagnose,
-)
-from jarvis.monitoring.intelligence import (
-    sensors_text,
-    history_text,
-)
+from jarvis.core.text import normalize, normalize_words, strip_address
+from jarvis.monitoring import system, intelligence, diagnostics
+from jarvis.projects import manager, sessions
+from jarvis.modes import manager as modes
+from jarvis.modules import projects as legacy_projects
+from jarvis import omarchy
 
-from jarvis.monitoring.diagnostics import (
-    explain_slowdown,
-)
+Handler = Callable[..., str]
+
 
 @dataclass(frozen=True)
 class Command:
+    id: str
     name: str
     description: str
     examples: tuple[str, ...]
-    handler: Callable[[], str] | None = None
+    handler: Handler
+    category: str
+    aliases: tuple[str, ...] = ()
+    pattern: str | None = None
+    parameter: str | None = None
+
+    def match(self, message: str) -> tuple[str, ...] | None:
+        text = normalize(message)
+        if text in {normalize(alias) for alias in self.aliases}:
+            return ()
+        if self.pattern is None:
+            return None
+        match = re.fullmatch(self.pattern, text)
+        if match is None:
+            return None
+        raw = strip_address(message)
+        # Extraire les arguments depuis l'original : casse et accents conservés.
+        if self.parameter == "objective":
+            return (raw.split(":", 1)[1].strip(),)
+        if self.parameter == "file":
+            return (re.split(r"\s+", raw, maxsplit=3)[3],)
+        if self.parameter == "project":
+            return (re.split(r"\s+", raw, maxsplit=2)[2],)
+        return match.groups()
 
 
-COMMANDS = [
-    Command(
-        "état système",
-        "Afficher CPU, RAM, disque, uptime et batterie",
-        ("état système", "statut système"),
-        system_status,
-    ),
-    Command(
-        "processus",
-        "Lister les processus les plus consommateurs de CPU",
-        ("processus", "top processus"),
-        top_processes,
-    ),
-    Command(
-        "diagnostic",
-        "Rechercher les saturations de ressources",
-        ("diagnostic", "diagnostic système"),
-        diagnose,
-    ),
-    Command(
-        "batterie",
-        "Afficher la charge et l'autonomie estimée",
-        ("batterie", "état batterie"),
-        battery_status,
-    ),
-    Command(
-        "ouvre un terminal",
-        "Lancer Foot",
-        ("ouvre un terminal",),
-    ),
-    Command(
-        "passe au workspace 2",
-        "Changer de workspace (1 à 9)",
-        ("passe au workspace 2",),
-    ),
-    Command(
-        "active le mode Travail",
-        "Ouvrir les outils de développement",
-        ("active le mode Travail",),
-    ),
-    Command(
-        "projets Rust",
-        "Lister les projets Rust disponibles",
-        ("projets Rust",),
-    ),
-    Command(
-        "ouvre rust NOM",
-        "Ouvrir un projet Rust par son nom",
-        ("ouvre rust NOM",),
-    ),
-    Command(
-        "capteurs",
-        "Afficher les températures AMD et les autres capteurs Linux",
-        (
-            "capteurs",
-            "températures",
-            "temperatures",
-        ),
-        sensors_text,
-    ),
-    Command(
-        "historique",
-        "Afficher les statistiques CPU/RAM de la dernière heure",
-        (
-            "historique",
-            "historique performances",
-            "historique système",
-        ),
-        history_text,
-    ),
-    Command(
-        "pourquoi mon pc ralentit",
-        "Analyser les ressources, températures et processus",
-        (
-            "pourquoi mon pc ralentit",
-            "analyse mon pc",
-            "diagnostic avancé",
-            "mon pc est lent",
-        ),
-        explain_slowdown,
-    ),
+@dataclass(frozen=True)
+class ResolvedCommand:
+    command: Command
+    arguments: tuple[str, ...]
 
-    # JARVIS V0.7 — PROJECT MANAGER
-    Command(
-        "mes projets",
-        "Lister les projets Rust et Python",
-        ("mes projets",),
-    ),
-    Command(
-        "reprends mon projet Rust",
-        "Reprendre le dernier projet Rust utilisé",
-        ("reprends mon projet Rust",),
-    ),
-    Command(
-        "reprends mon projet Python",
-        "Reprendre le dernier projet Python utilisé",
-        ("reprends mon projet Python",),
-    ),
-    Command(
-        "ouvre projet NOM",
-        "Ouvrir un projet par son nom exact",
-        ("ouvre projet NOM",),
-    ),
-
-    Command(
-        "projet actif",
-        "Afficher le dernier projet ouvert",
-        ("projet actif",),
-    ),
-
-    Command(
-        "état git",
-        "Afficher la branche, le commit et les modifications",
-        ("état git",),
-    ),
-
-    Command(
-        "objectif projet : TEXTE",
-        "Mémoriser le prochain objectif du projet actif",
-        ("objectif projet : TEXTE",),
-    ),
-
-    Command(
-        "sessions projets",
-        "Afficher les dix dernières reprises de projets",
-        ("sessions projets",),
-    ),
-]
+    def run(self) -> str:
+        return self.command.handler(*self.arguments)
 
 
-def normalize(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text.lower())
-    text = "".join(
-        char for char in text
-        if not unicodedata.combining(char)
+def rust_list() -> str:
+    projects = legacy_projects.rust_projects()
+    return "\n".join(str(p) for p in projects) if projects else "Aucun projet Rust détecté."
+
+
+def rust_open(name: str) -> str:
+    matches = [p for p in legacy_projects.rust_projects() if normalize_words(p.name) == normalize_words(name)]
+    if len(matches) != 1:
+        return "Projet introuvable ou nom ambigu. Utilise 'projets rust'."
+    return legacy_projects.open_project(matches[0]) + "\n" + legacy_projects.git_summary(matches[0])
+
+
+def modes_list() -> str:
+    return "J.A.R.V.I.S. — MODES DISPONIBLES\n\n" + "\n".join(
+        f"• {name.capitalize()} (workspace {profile['workspace']})"
+        for name, profile in modes.MODES.items()
     )
-    text = re.sub(r"\s+", " ", text).strip()
-    return re.sub(r"^jarvis[, :]*", "", text)
 
 
 def help_text() -> str:
-    lines = [
-        "J.A.R.V.I.S. V0.7 — COMMANDES DISPONIBLES",
-        "",
-        "MONITORING",
-        "Dashboard temps réel, historique SQLite et alertes.",
-        "",
-    ]
-
-    for command in COMMANDS:
-        lines.append(
-            f"• {command.name}\n"
-            f"  {command.description}"
-        )
-
+    lines = ["J.A.R.V.I.S. V1.0 — COMMANDES DISPONIBLES"]
+    category = None
+    for entry in COMMANDS:
+        if entry.category != category:
+            category = entry.category
+            lines.extend(["", category.upper()])
+        lines.append(f"• {entry.name}\n  {entry.description}")
+        lines.append("  Exemples : " + " | ".join(entry.examples))
+        seen = {normalize(e) for e in entry.examples}
+        aliases = []
+        for alias in entry.aliases:
+            if normalize(alias) not in seen:
+                aliases.append(alias)
+                seen.add(normalize(alias))
+        if aliases:
+            lines.append("  Alias : " + " | ".join(aliases))
     return "\n".join(lines)
 
-def dispatch(command: str) -> str | None:
-    text = normalize(command)
 
-    if text in {"aide", "help", "commandes"}:
-        return help_text()
+def exact(id: str, name: str, description: str, aliases: tuple[str, ...],
+          handler: Handler, category: str) -> Command:
+    return Command(id, name, description, (name,), handler, category, aliases)
 
-    for entry in COMMANDS:
-        if entry.handler is None:
+
+COMMANDS = (
+    exact("help", "aide", "Afficher toutes les commandes et leurs alias", ("aide", "help", "commandes"), help_text, "Général"),
+    exact("system.status", "état système", "CPU, RAM, disque, uptime et batterie", ("état système", "statut système", "statut", "status", "monitoring", "état du pc"), system.system_status, "Monitoring"),
+    exact("system.processes", "processus", "Processus les plus consommateurs de CPU", ("processus", "top processus"), system.top_processes, "Monitoring"),
+    exact("system.diagnose", "diagnostic", "Rechercher les saturations", ("diagnostic", "diagnostic système"), system.diagnose, "Monitoring"),
+    exact("system.battery", "batterie", "Charge et autonomie estimée", ("batterie", "état batterie"), system.battery_status, "Monitoring"),
+    exact("system.sensors", "capteurs", "Températures AMD et capteurs Linux", ("capteurs", "températures", "temperatures"), intelligence.sensors_text, "Monitoring"),
+    exact("system.history", "historique", "Statistiques CPU/RAM de la dernière heure", ("historique", "historique performances", "historique système"), intelligence.history_text, "Monitoring"),
+    exact("system.slowdown", "pourquoi mon pc ralentit", "Analyser ressources, températures et processus", ("pourquoi mon pc ralentit", "analyse mon pc", "diagnostic avancé", "mon pc est lent"), diagnostics.explain_slowdown, "Monitoring"),
+    Command("desktop.terminal", "ouvre un terminal", "Lancer le terminal configuré", ("ouvre un terminal", "lance foot"), omarchy.open_terminal, "Omarchy", pattern=r".*\b(?:ouvre|ouvrir|lance)\s+(?:un |le )?(?:terminal|foot)\b.*"),
+    Command("desktop.workspace", "passe au workspace N", "Changer de workspace (1 à 9) ; bureau et espace acceptés", ("passe au workspace 2", "va au bureau 3"), lambda n: omarchy.change_workspace(int(n)), "Omarchy", pattern=r"(?=.*\b(?:passe|aller|va|active|change)\b).*\b(?:workspace|bureau|espace)\s+([1-9])\b.*"),
+    exact("projects.list", "mes projets", "Lister les projets Rust et Python", ("mes projets", "liste mes projets"), manager.list_projects, "Projets"),
+    exact("projects.rust.list", "projets Rust", "Découverte Rust historique à un ou deux niveaux", ("projets rust", "liste rust", "liste mes projets rust"), rust_list, "Projets"),
+    Command("projects.rust.resume", "reprends mon projet Rust", "Reprendre le dernier projet Rust utilisé", ("reprends mon projet Rust", "reprendre mon projet Rust"), lambda: manager.resume_language("Rust"), "Projets", pattern=r"(?=.*rust)(?=.*(?:reprends|reprendre)).*"),
+    exact("projects.python.resume", "reprends mon projet Python", "Reprendre le dernier projet Python utilisé", ("reprends mon projet python", "reprendre mon projet python"), lambda: manager.resume_language("Python"), "Projets"),
+    Command("projects.open", "ouvre projet NOM", "Ouvrir un projet par son nom exact", ("ouvre projet MonProjet",), manager.open_named_project, "Projets", pattern=r"ouvre projet .+", parameter="project"),
+    Command("projects.rust.open", "ouvre rust NOM", "Ouverture Rust historique", ("ouvre rust MonProjet",), rust_open, "Projets", pattern=r"ouvre rust .+", parameter="project"),
+    exact("projects.active", "projet actif", "Afficher le dernier projet ouvert", ("projet actif",), manager.active_project_text, "Projets"),
+    exact("projects.git", "état git", "Branche, commit et modifications (lecture seule)", ("état git", "git status"), manager.active_git, "Projets"),
+    Command("projects.objective", "objectif projet : TEXTE", "Mémoriser l'objectif du projet actif (500 caractères)", ("objectif projet : Terminer le module",), manager.set_objective, "Projets", pattern=r"objectif projet\s*:.*", parameter="objective"),
+    exact("projects.history", "sessions projets", "Dix dernières reprises de projets", ("sessions projets",), manager.recent_sessions, "Projets"),
+    Command("sessions.track", "suis le fichier CHEMIN", "Suivre un fichier dans le projet actif", ("suis le fichier src/main.rs",), sessions.track_file, "Sessions", pattern=r"suis le fichier .+", parameter="file"),
+    exact("sessions.files", "mes fichiers suivis", "Afficher les fichiers suivis", ("mes fichiers suivis", "affiche mes fichiers suivis"), sessions.files_text, "Sessions"),
+    exact("sessions.save", "sauvegarde ma session", "Enregistrer projet, fichiers, Git et objectif", ("sauvegarde session", "sauvegarde ma session", "enregistre ma session"), sessions.save_session, "Sessions"),
+    exact("sessions.restore", "reprends ma session", "Ouvrir le workspace Travail, l'éditeur et Foot", ("reprends ma session", "restaure ma session", "reprendre session"), sessions.restore_session, "Sessions"),
+    exact("sessions.status", "état session", "Afficher la session sauvegardée du projet actif", ("état session", "ma session"), sessions.session_info, "Sessions"),
+    *(Command(f"modes.{name}", f"mode {label}", description,
+              (f"mode {label}", f"active le mode {label}", f"lancer le mode {label}"),
+              lambda name=name: modes.activate_mode(name), "Modes",
+              pattern=rf"(?:(?:active|activer|lance|lancer)\s+)?(?:le\s+)?mode\s+{name}")
+      for name, label, description in (
+          ("travail", "Travail", "Éditeur, terminal et projet actif — workspace Travail"),
+          ("gaming", "Gaming", "Steam — workspace Gaming"),
+          ("etudes", "Études", "Chrome et Notion via gtk-launch notion — workspace Études"),
+      )),
+    exact("modes.status", "mode actuel", "Afficher le dernier mode enregistré", ("mode actuel", "mode actif"), modes.mode_status, "Modes"),
+    exact("modes.list", "mes modes", "Afficher les modes et leurs workspaces", ("mes modes", "liste les modes", "modes"), modes_list, "Modes"),
+)
+
+
+def validate_registry(commands: tuple[Command, ...] = COMMANDS) -> None:
+    ids: set[str] = set()
+    aliases: dict[str, str] = {}
+    for entry in commands:
+        if entry.id in ids or not callable(entry.handler):
+            raise ValueError(f"Commande invalide : {entry.id}")
+        ids.add(entry.id)
+        for alias in entry.aliases:
+            key = normalize(alias)
+            if key in aliases and aliases[key] != entry.id:
+                raise ValueError(f"Alias ambigu : {key}")
+            aliases[key] = entry.id
+        if entry.pattern:
+            re.compile(entry.pattern)
+
+
+def resolve(message: str, category: str | None = None) -> ResolvedCommand | None:
+    # Les paramètres peuvent contenir des mots d'autres commandes : privilégier
+    # les routes structurées avant les anciennes formulations libres.
+    ordered = sorted(COMMANDS, key=lambda c: c.id in {
+        "desktop.terminal", "desktop.workspace", "projects.rust.resume",
+    })
+    for entry in ordered:
+        if category is not None and entry.category != category:
             continue
-
-        if any(
-            text == normalize(example)
-            for example in entry.examples
-        ):
-            return entry.handler()
-
+        arguments = entry.match(message)
+        if arguments is not None:
+            return ResolvedCommand(entry, arguments)
     return None
+
+
+def dispatch(message: str, category: str | None = None) -> str | None:
+    resolved = resolve(message, category)
+    return resolved.run() if resolved else None
+
+
+validate_registry()

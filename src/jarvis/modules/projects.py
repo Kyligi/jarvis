@@ -3,11 +3,15 @@ from pathlib import Path
 import shutil
 import subprocess
 
-ROOT = Path.home() / "Projects"
+from jarvis.config import settings
+from jarvis.projects.manager import git_summary
+
+ROOT = settings.projects_root
 
 
-def rust_projects(root: Path = ROOT) -> list[Path]:
+def rust_projects(root: Path | None = None) -> list[Path]:
     """Cherche Cargo.toml à profondeur raisonnable, sans suivre les symlinks."""
+    root = root or ROOT
     if not root.is_dir():
         return []
     found: set[Path] = set()
@@ -20,20 +24,11 @@ def rust_projects(root: Path = ROOT) -> list[Path]:
     return sorted(found, key=lambda p: p.stat().st_mtime, reverse=True)
 
 
-def git_summary(path: Path) -> str:
-    if not (path / ".git").exists():
-        return "Projet sans dépôt Git local."
-    def run(*args: str) -> str:
-        result = subprocess.run(["git", "-C", str(path), *args], capture_output=True, text=True, timeout=5, check=False)
-        return result.stdout.strip() or result.stderr.strip() or "(aucune information)"
-    return f"Branche : {run('branch', '--show-current')}\nDernier commit : {run('log', '-1', '--format=%s')}\nModifications :\n{run('status', '--short')}"
-
-
 def open_project(path: Path) -> str:
     path = path.expanduser().resolve()
     if not (path / "Cargo.toml").is_file() or ROOT.resolve() not in path.parents:
         return "Ouverture refusée : projet Rust non valide dans ~/Projects."
-    for editor in ("code", "codium", "zed", "cursor"):
+    for editor in settings.rust_editors:
         if shutil.which(editor):
             subprocess.Popen([editor, str(path)], start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return f"Projet ouvert dans {editor} : {path.name}"
