@@ -1,9 +1,10 @@
-# J.A.R.V.I.S. V1.0
+# J.A.R.V.I.S. V1.1 — Nebula
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
-V1.0 stabilise l'architecture sans refonte visuelle. Les versions suivantes sont
-planifiées dans [la roadmap](docs/ROADMAP.md), sans implémentation anticipée.
+La V1.1 ajoute **Jarvis HUD**, un centre de contrôle à six pages, et modernise
+**Jarvis Mini** avec le thème Nebula. La base V1.0 et ses 30 commandes sont conservées.
+Les versions suivantes restent planifiées dans [la roadmap](docs/ROADMAP.md).
 
 ## Installation et démarrage
 
@@ -22,6 +23,60 @@ Le raccourci historique **SUPER+SHIFT+J** utilise `~/.local/bin/jarvis-toggle`.
 Le script et `~/.config/hypr/bindings.lua` existants n'ont pas été modifiés ; ils ne
 sont pas distribués dans ce dépôt. Sur une nouvelle machine, `uv run jarvis` permet
 le démarrage direct ; l'intégration du raccourci est à installer séparément.
+
+## Deux interfaces, un seul assistant
+
+`uv run jarvis` démarre **Mini**, toujours ciblée par SUPER+SHIFT+J. Son bouton
+**Ouvrir le HUD** ouvre une seule fenêtre redimensionnable (1180 × 780 par défaut),
+sans nouveau processus. La fermeture du HUD le masque ; le bouton Mini réutilise
+la même instance. Fermer Mini ferme également le HUD et attend les workers en cours.
+Le masquage par le raccourci Hyprland conserve Mini et son historique.
+
+Le HUD propose :
+
+- **Accueil** : CPU/RAM/batterie, mode enregistré, dernier projet et objectif,
+  alertes émises depuis le démarrage, actions rapides.
+- **Système** : monitoring partagé, graphiques CPU/RAM, tous les capteurs disponibles,
+  historique et processus (actualisation à l'ouverture puis toutes les 15 s sur cette
+  page visible), diagnostic avancé à la demande.
+- **Projets** : recherche Rust/Python, dernière utilisation, objectif, sélection et
+  consultation de la branche, du dernier commit et des modifications Git. Le bouton
+  d'ouverture utilise `ouvre projet NOM` ; un nom ambigu reste refusé par le moteur.
+- **Sessions** : projet actif, sauvegarde, date, objectif, fichiers suivis, historique,
+  sauvegarde et restauration via les commandes existantes.
+- **Modes** : profils et applications prévues, dernier mode enregistré et dernière
+  demande de cette exécution, boutons d'activation. Études conserve `gtk-launch notion`.
+- **Paramètres** : configuration métier en lecture seule, animations, intervalle du
+  monitoring, version, raccourcis et emplacement des logs.
+
+La barre de commandes globale accepte Entrée ; **Ctrl+L** lui rend le focus. Mini
+et HUD partagent une seule commande en cours, les réponses et un seul collecteur.
+Chaque vue conserve au maximum 500 blocs de réponses en mémoire. Les pages inactives
+ne lancent pas de lectures périodiques ; le monitoring continue pour les alertes.
+
+Aucune nouvelle commande textuelle n'est ajoutée : `aide` couvre toujours les
+30 commandes. L'ouverture du HUD est une action de fenêtre via le bouton Mini.
+
+### Préférences Nebula
+
+Les animations de navigation (180 ms) et l'intervalle du monitoring (1 à 30 secondes,
+2 par défaut) sont appliqués aux interfaces après **Enregistrer et appliquer**.
+Ils sont persistés atomiquement dans `data_dir/ui.toml`, séparément du TOML métier :
+
+```toml
+animations = true
+refresh_seconds = 2
+```
+
+Un fichier invalide reste intact et un avertissement apparaît dans Paramètres.
+Le monitoring enregistre au plus toutes les dix secondes ; à un intervalle supérieur,
+l'enregistrement suit les mesures disponibles. Les alertes demandent toujours trois
+mesures consécutives, donc leur délai dépend de l'intervalle choisi.
+
+Le HUD utilise la classe Wayland `jarvis-hud`, Mini conserve `jarvis`. Cette séparation
+a été contrôlée nativement sur Qt 6.12 / Hyprland 0.56.2, sans modifier le script ni
+les bindings. La recette avec le workspace spécial et le raccourci reste à effectuer
+pour la V1.1 ; l'identité distincte dépend du backend **Qt Wayland natif**, pas XWayland.
 
 ## Configuration
 
@@ -82,7 +137,7 @@ Aucun linter n'est configuré dans le projet.
 
 La validation native reste distincte : consulter [VALIDATION.md](docs/VALIDATION.md).
 Le résultat des tests et les limites sont consignés avec l'audit dans
-[AUDIT_V1.md](docs/AUDIT_V1.md).
+[AUDIT_V1.md](docs/AUDIT_V1.md) et [AUDIT_V1_1.md](docs/AUDIT_V1_1.md).
 
 ## Données et limites
 
@@ -96,7 +151,7 @@ Les objectifs et sessions restent des données personnelles locales : ne pas y
 saisir de secrets.
 
 Les commandes sont exécutées une à la fois en arrière-plan. Le dashboard collecte
-toutes les deux secondes et enregistre au plus toutes les dix secondes. La
+selon la préférence (deux secondes par défaut) et enregistre au plus toutes les dix secondes. La
 fermeture attend les tâches en cours. Une application lancée peut échouer après
 son démarrage : Jarvis ne garantit pas qu'une fenêtre est apparue. L'état de mode
 est persistant : réactiver le même mode change de workspace sans relancer ses apps,

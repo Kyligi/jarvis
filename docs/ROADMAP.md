@@ -1,13 +1,13 @@
 # Roadmap J.A.R.V.I.S. V1.0–V2.0
 
 Les versions suivent l'ordre ci-dessous : V1.10 vient après V1.9.
-Seule la V1.0 est implémentée dans ce chantier. Les autres lignes sont des objectifs,
-pas des fonctionnalités disponibles. Chaque version conserve les acquis et leurs tests.
+V1.0 est validée manuellement par l’utilisateur. V1.1 est implémentée ; sa recette
+native complète reste à faire. V1.2–V2.0 sont des objectifs, pas des fonctionnalités disponibles. Chaque version conserve les acquis et leurs tests.
 
 | Version | Objectif | Critères d'acceptation |
 | --- | --- | --- |
 | V1.0 | Architecture, commandes centralisées, stabilité | Catalogue unique avec identifiants, catégories, handlers, alias et aide générée ; tests des formulations historiques ; configuration conservant les valeurs actuelles ; SQLite compatible ; commandes et collecte hors thread graphique ; validation manuelle Omarchy sans régression. |
-| V1.1 | Interface Jarvis HUD | Maquette approuvée ; lisibilité et navigation clavier ; états chargement/erreur accessibles ; monitoring et commandes historiques utilisables sans perte de fonctions. |
+| V1.1 | Interface Jarvis HUD | Mini Nebula et HUD à six pages connectées ; monitoring et moteur partagés ; navigation clavier et états chargement/erreur ; préférences persistées ; tests hors écran ; recette native Omarchy et validation visuelle utilisateur restantes. |
 | V1.2 | Contrôle avancé des fenêtres Hyprland | Inventaire et ciblage explicite des fenêtres ; déplacements et dispositions testés sur les dispatchers Lua installés ; erreurs de cible gérées ; raccourcis existants préservés. |
 | V1.3 | Modes et scénarios personnalisables | Profils éditables et validés ; actions autorisées uniquement ; prévisualisation avant activation ; modes Travail/Gaming/Études importés sans changement de workspaces. |
 | V1.4 | Assistant vocal local | Reconnaissance et synthèse locales ; activation/désactivation explicite du microphone ; indication visible ; aucun envoi audio externe par défaut ; confirmation des actions sensibles. |
@@ -25,6 +25,8 @@ pas des fonctionnalités disponibles. Chaque version conserve les acquis et leur
 ## Barrière de validation
 
 Une version n'est pas déclarée validée uniquement parce que les tests simulés passent.
-Pour V1.0, la recette native de [VALIDATION.md](VALIDATION.md) reste à effectuer par
-l'utilisateur sur Omarchy, notamment SUPER+SHIFT+J, les trois syntaxes Lua historiques
-et les lanceurs réels. Aucun travail V1.1+ n'est requis pour cette recette.
+La V1.0 a été déclarée validée manuellement par l'utilisateur au lancement du chantier
+V1.1. Pour la V1.1, voir la nouvelle recette dans [VALIDATION.md](VALIDATION.md) :
+les tests hors écran et le contrôle natif ciblé des identités ne remplacent pas
+la validation du raccourci, des applications et de l'utilisation quotidienne.
+Aucune fonctionnalité V1.2+ n'est implémentée dans ce chantier.
