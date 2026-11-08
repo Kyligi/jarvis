@@ -1,4 +1,4 @@
-from jarvis.integrations.desktop import focus_workspace
+from jarvis.services.windows import service as window_service, existing_application, WindowError
 
 import json
 import shutil
@@ -53,12 +53,18 @@ def save_mode(name):
 
 
 def switch_workspace(number):
-    focus_workspace(number, "mode")
+    window_service.switch(number, "mode")
 
 
 def launch(candidates, args=None):
     """Lance uniquement une application prédéfinie."""
 
+    try:
+        existing = existing_application(candidates)
+    except WindowError:
+        return "Inventaire indisponible : lancement évité"
+    if existing:
+        return f"{existing[0].app} déjà ouvert ({len(existing)} fenêtre(s), position conservée)"
     for name in candidates:
         executable = shutil.which(name)
 
@@ -129,7 +135,15 @@ def activate_mode(name):
         # Ouvrir Notion via son lanceur .desktop
         notion_launcher = shutil.which(settings.desktop_launcher)
 
-        if notion_launcher:
+        try:
+            notion_exists = existing_application(["notion"])
+        except WindowError:
+            notion_exists = None
+        if notion_exists is None:
+            launched.append("Notion : inventaire indisponible, lancement évité")
+        elif notion_exists:
+            launched.append("Notion déjà ouvert, position conservée")
+        elif notion_launcher:
             subprocess.Popen(
                 [notion_launcher, settings.notion_desktop],
                 stdout=subprocess.DEVNULL,
@@ -149,7 +163,7 @@ def activate_mode(name):
         f"J.A.R.V.I.S. — MODE {name.upper()}\n\n"
         f"Workspace : {profile['workspace']}\n"
         f"Profil : {profile['description']}\n"
-        f"Applications lancées : "
+        f"Applications : "
         f"{', '.join(launched) if launched else 'aucune'}"
     )
 

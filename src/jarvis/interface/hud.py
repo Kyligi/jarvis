@@ -12,6 +12,7 @@ from jarvis.interface.pages.projects import ProjectsPage
 from jarvis.interface.pages.sessions import SessionsPage
 from jarvis.interface.pages.modes import ModesPage
 from jarvis.interface.pages.settings import SettingsPage
+from jarvis.interface.pages.windows import WindowsPage
 
 
 class HudWindow(QMainWindow):
@@ -38,7 +39,7 @@ class HudWindow(QMainWindow):
         self.navigation.setObjectName("navigation")
         self.navigation.setAccessibleName("Navigation du HUD")
         self.navigation.setFixedWidth(185)
-        self.navigation.addItems(["01   Accueil", "02   Système", "03   Projets", "04   Sessions", "05   Modes", "06   Paramètres"])
+        self.navigation.addItems(["01   Accueil", "02   Système", "03   Projets", "04   Sessions", "05   Modes", "06   Paramètres", "07   Fenêtres"])
         sidebar.addWidget(self.navigation, 1)
         mini_button = QPushButton("Retour à Mini")
         mini_button.clicked.connect(self.show_mini)
@@ -53,7 +54,7 @@ class HudWindow(QMainWindow):
         content.addLayout(header)
         self.stack = QStackedWidget()
         self.pages = [HomePage(context), SystemPage(context), ProjectsPage(context),
-                      SessionsPage(context), ModesPage(context), SettingsPage(context)]
+                      SessionsPage(context), ModesPage(context), SettingsPage(context), WindowsPage(context)]
         for page in self.pages:
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)

@@ -10,6 +10,7 @@ from jarvis.projects import manager, sessions
 from jarvis.modes import manager as modes
 from jarvis.modules import projects as legacy_projects
 from jarvis import omarchy
+from jarvis.services import window_commands as windows
 
 Handler = Callable[..., str]
 
@@ -26,7 +27,7 @@ class Command:
     pattern: str | None = None
     parameter: str | None = None
 
-    def match(self, message: str) -> tuple[str, ...] | None:
+    def match(self, message: str) -> tuple[str | int, ...] | None:
         text = normalize(message)
         if text in {normalize(alias) for alias in self.aliases}:
             return ()
@@ -43,13 +44,17 @@ class Command:
             return (re.split(r"\s+", raw, maxsplit=3)[3],)
         if self.parameter == "project":
             return (re.split(r"\s+", raw, maxsplit=2)[2],)
+        if self.parameter == "workspace_number":
+            return (int(match.group(1)),)
+        if self.parameter == "window_move":
+            return (match.group(1), int(match.group(2)))
         return match.groups()
 
 
 @dataclass(frozen=True)
 class ResolvedCommand:
     command: Command
-    arguments: tuple[str, ...]
+    arguments: tuple[str | int, ...]
 
     def run(self) -> str:
         return self.command.handler(*self.arguments)
@@ -136,6 +141,23 @@ COMMANDS = (
       )),
     exact("modes.status", "mode actuel", "Afficher le dernier mode enregistré", ("mode actuel", "mode actif"), modes.mode_status, "Modes"),
     exact("modes.list", "mes modes", "Afficher les modes et leurs workspaces", ("mes modes", "liste les modes", "modes"), modes_list, "Modes"),
+    exact("windows.list", "mes fenêtres", "Lister les fenêtres réelles avec leurs adresses", ("mes fenêtres", "liste mes fenêtres"), windows.inventory, "Fenêtres"),
+    exact("windows.active", "fenêtre active", "Identifier la fenêtre active", ("fenêtre active",), windows.active, "Fenêtres"),
+    exact("windows.desktops", "mes bureaux", "Lister les workspaces", ("mes bureaux",), windows.desktops, "Fenêtres"),
+    Command("windows.workspace", "bureau N", "Afficher un bureau de 1 à 9", ("bureau 3",), windows.switch, "Fenêtres", pattern=r"bureau ([1-9])", parameter="workspace_number"),
+    exact("windows.next", "bureau suivant", "Bureau suivant du moniteur", ("bureau suivant",), lambda: windows.step(1), "Fenêtres"),
+    exact("windows.previous", "bureau précédent", "Bureau précédent du moniteur", ("bureau précédent",), lambda: windows.step(-1), "Fenêtres"),
+    Command("windows.focus", "focus APPLICATION", "Cibler par classe, titre ou adresse ; sélection si ambigu", ("focus Foot",), lambda q: windows.action("focus", q), "Fenêtres", pattern=r"focus (.+)"),
+    Command("windows.locate", "où est APPLICATION", "Rechercher par classe ou titre", ("où est Chrome",), windows.locate, "Fenêtres", pattern=r"ou est (.+)"),
+    Command("windows.move", "déplace APPLICATION au bureau N", "Déplacer une fenêtre identifiée", ("déplace Foot au bureau 3",), lambda q, n: windows.action("move", q, n), "Fenêtres", pattern=r"deplace (.+) au bureau ([1-9])", parameter="window_move"),
+    *(Command(f"windows.{side}", f"mets APPLICATION à {side}", "Placement en moitié d’écran flottante", (f"mets Foot à {side}",), lambda q, side=side: windows.action(side, q), "Fenêtres", pattern=rf"mets (.+) a {side}") for side in ("gauche", "droite")),
+    exact("windows.center", "centre la fenêtre", "Centrer la fenêtre active si flottante", ("centre la fenêtre",), lambda: windows.action("center"), "Fenêtres"),
+    exact("windows.float", "fenêtre flottante", "Rendre la fenêtre active flottante", ("fenêtre flottante",), lambda: windows.action("float"), "Fenêtres"),
+    exact("windows.tile", "fenêtre mosaïque", "Replacer la fenêtre active en mosaïque", ("fenêtre mosaïque",), lambda: windows.action("tile"), "Fenêtres"),
+    exact("windows.organize", "organise mon bureau", "Prévisualiser la remise en mosaïque des fenêtres non protégées", ("organise mon bureau",), lambda: windows.preview("bureau"), "Fenêtres"),
+    *(exact(f"windows.layout.{name}", f"disposition {label}", "Prévisualiser ; confirmation obligatoire avant déplacement", (f"disposition {label}",), lambda name=name: windows.preview(name), "Fenêtres") for name, label in (("developpement", "développement"), ("etudes", "études"), ("gaming", "gaming"))),
+    Command("windows.confirm", "confirme disposition CODE", "Appliquer le plan prévisualisé pendant 60 secondes", ("confirme disposition 1234abcd",), windows.confirm, "Fenêtres", pattern=r"confirme disposition ([0-9a-f]{8})"),
+    exact("windows.cancel", "annule disposition", "Annuler la disposition en attente", ("annule disposition",), windows.cancel, "Fenêtres"),
 )
 
 

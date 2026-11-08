@@ -74,6 +74,15 @@ class CommandBus(QObject):
         self.started.emit(identifier)
         return True
 
+    def submit_operation(self, operation) -> bool:
+        """Action HUD typée utilisant le même verrou de commandes que Mini."""
+        if self.busy or not self.runner.start(operation):
+            return False
+        self.busy = True
+        self.busy_changed.emit(True)
+        self.started.emit("windows.action")
+        return True
+
     @Slot(str)
     def failure(self, error):
         self.result.emit(f"Erreur Jarvis ({error}). Réessaie ou consulte les logs.")

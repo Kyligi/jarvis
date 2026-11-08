@@ -1,4 +1,4 @@
-from jarvis.integrations.desktop import focus_workspace
+from jarvis.services.windows import service as window_service
 
 import json
 import shutil
@@ -201,7 +201,7 @@ def save_session():
 # =========================================
 
 def switch_workspace():
-    focus_workspace(DEV_WORKSPACE, "session")
+    window_service.switch(DEV_WORKSPACE, "session")
 
 
 # =========================================

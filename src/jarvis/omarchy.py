@@ -1,4 +1,4 @@
-from jarvis.integrations.desktop import focus_workspace
+from jarvis.services.windows import service as window_service
 
 import shutil
 import subprocess
@@ -23,7 +23,7 @@ def change_workspace(number: int) -> str:
     if not 1 <= number <= 9:
         return "Le workspace doit être compris entre 1 et 9."
 
-    focus_workspace(number, "command")
+    window_service.switch(number, "command")
     return f"Workspace {number} activé."
 
 

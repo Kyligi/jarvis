@@ -18,7 +18,7 @@ QLabel#subheading {{ font-size: 18px; font-weight: 600; }}
 QLabel#muted {{ color: {MUTED}; }}
 QLabel#status {{ color: {SUCCESS}; }}
 QLabel#metricValue {{ font-size: 23px; font-weight: 600; }}
-QLineEdit, QTextEdit, QPlainTextEdit, QListWidget, QTableWidget, QSpinBox {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 8px; padding: 8px; selection-background-color: #23546A; }}
+QLineEdit, QTextEdit, QPlainTextEdit, QListWidget, QTableWidget, QTreeWidget, QComboBox, QSpinBox {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 8px; padding: 8px; selection-background-color: #23546A; }}
 QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus, QSpinBox:focus {{ border: 1px solid {CYAN}; }}
 QPushButton {{ background: {SURFACE}; border: 1px solid {BORDER}; border-radius: 8px; padding: 9px 14px; font-weight: 600; }}
 QPushButton:hover {{ background: #203B53; border-color: {CYAN}; }}

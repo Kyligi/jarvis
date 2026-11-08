@@ -18,6 +18,8 @@ def isolated(tmp_path, monkeypatch):
     from jarvis.memory import database
     from jarvis import preferences
     monkeypatch.setattr(preferences, "PREFERENCES_PATH", tmp_path / "ui.toml")
+    from jarvis.services.windows import service
+    monkeypatch.setattr(service, "windows", lambda: [])
     root = tmp_path / "Projects"
     root.mkdir()
     monkeypatch.setattr(manager, "PROJECTS_ROOT", root)
