@@ -89,7 +89,12 @@ def normalize(text: str) -> str:
 
 
 def help_text() -> str:
-    lines = ["J.A.R.V.I.S. — COMMANDES DISPONIBLES", ""]
+    lines = [
+        "J.A.R.V.I.S. V0.5 — COMMANDES DISPONIBLES",
+        "",
+        "DASHBOARD : monitoring automatique toutes les 2 secondes.",
+        "",
+    ]
 
     for command in COMMANDS:
         lines.append(
@@ -97,7 +102,6 @@ def help_text() -> str:
         )
 
     return "\n".join(lines)
-
 
 def dispatch(command: str) -> str | None:
     text = normalize(command)

@@ -1,13 +1,12 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QTextEdit, QPushButton
 from jarvis.core.commands import execute
-
+from jarvis.interface.dashboard import MonitorDashboard
 
 class JarvisWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("J.A.R.V.I.S. — Omarchy")
-        self.resize(560, 360)
         self.setWindowFlag(Qt.WindowType.Window, True)
         self.setStyleSheet("""
             QWidget { background-color: #0b1220; color: #d8edff; font-size: 14px; }
@@ -19,7 +18,7 @@ class JarvisWindow(QWidget):
         title = QLabel("◉  J.A.R.V.I.S.     |     OMARCHY")
         title.setStyleSheet("font-size: 20px; font-weight: bold; color: #61d9ff;")
         layout.addWidget(title)
-        layout.addWidget(QLabel("Prototype V0.1 · commandes locales contrôlées"))
+        layout.addWidget(QLabel("Jarvis V0.5 • Monitoring intelligent"))
         self.output = QTextEdit()
         self.output.setReadOnly(True)
         self.output.setPlainText("Bonjour. Tape 'aide' pour connaître mes commandes.")
@@ -32,6 +31,12 @@ class JarvisWindow(QWidget):
         button.clicked.connect(self.run_command)
         layout.addWidget(button)
         self.command.setFocus()
+        # Jarvis V0.5 : tableau de bord
+        self.dashboard = MonitorDashboard(self)
+        self.layout().insertWidget(1, self.dashboard)
+
+        self.setMinimumSize(760, 620)
+        self.resize(760, 680)
 
     def run_command(self):
         command = self.command.text().strip()
