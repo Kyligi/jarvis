@@ -1,0 +1,48 @@
+# Python environments, caches and builds
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+secrets.toml
+.aws/
+.ssh/
+
+# Local memory, logs and backups
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+*.bak
+*.swp
+*.swo
+*~
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
