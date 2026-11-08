@@ -1,6 +1,6 @@
 from collections import deque
-from jarvis.interface.workers import Runner
-from jarvis.monitoring.collector import Collector
+from jarvis.interface.context import MonitorHub
+from jarvis.interface import theme
 
 from PySide6.QtCore import Qt, QTimer, Slot
 from PySide6.QtGui import QColor, QPainter, QPen
@@ -31,7 +31,7 @@ class HistoryGraph(QWidget):
         width = self.width()
         height = self.height()
 
-        painter.setPen(QPen(QColor("#293d55"), 1))
+        painter.setPen(QPen(QColor(theme.BORDER), 1))
         for level in (25, 50, 75):
             y = height * (1 - level / 100)
             painter.drawLine(
@@ -39,8 +39,8 @@ class HistoryGraph(QWidget):
             )
 
         for values, color in (
-            (self.cpu, "#22d3ee"),
-            (self.ram, "#a78bfa"),
+            (self.cpu, theme.CYAN),
+            (self.ram, theme.VIOLET),
         ):
             if len(values) < 2:
                 continue
@@ -64,12 +64,14 @@ class Metric(QWidget):
     def __init__(self, name):
         super().__init__()
 
+        self.setMinimumHeight(76)
         layout = QVBoxLayout(self)
         layout.setSpacing(3)
         layout.setContentsMargins(8, 7, 8, 7)
 
         self.title = QLabel(name)
         self.value = QLabel("-- %")
+        self.value.setObjectName("metricValue")
         self.bar = QProgressBar()
 
         self.bar.setRange(0, 100)
@@ -87,9 +89,10 @@ class Metric(QWidget):
 
 
 class MonitorDashboard(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, monitor=None, compact=False):
         super().__init__(parent)
 
+        self.compact = compact
         self.setObjectName("monitorDashboard")
 
         layout = QVBoxLayout(self)
@@ -107,10 +110,8 @@ class MonitorDashboard(QWidget):
         self.disk = Metric("SSD / DISQUE")
         self.battery = Metric("BATTERIE")
 
-        grid.addWidget(self.cpu, 0, 0)
-        grid.addWidget(self.ram, 0, 1)
-        grid.addWidget(self.disk, 1, 0)
-        grid.addWidget(self.battery, 1, 1)
+        for index, metric in enumerate((self.cpu, self.ram, self.disk, self.battery)):
+            grid.addWidget(metric, 0 if compact else index // 2, index if compact else index % 2)
 
         layout.addLayout(grid)
 
@@ -125,46 +126,40 @@ class MonitorDashboard(QWidget):
         self.temperature = QLabel(
             "Température : recherche des capteurs..."
         )
+        self.temperature.setWordWrap(True)
         layout.addWidget(self.temperature)
 
-        self.setStyleSheet("""
-            QWidget#monitorDashboard {
-                background: #101c2d;
-                border-radius: 10px;
-            }
+        self.monitor = monitor or MonitorHub(self)
+        self.owns_monitor = monitor is None
+        self.active = True
+        self.runner = self.monitor.runner
+        self.timer = self.monitor.timer
+        self.monitor.updated.connect(self.receive_snapshot)
+        self.monitor.failed.connect(self.show_error)
+        if self.owns_monitor:
+            QApplication.instance().aboutToQuit.connect(self.monitor.shutdown)
+        if self.monitor.latest is not None:
+            self.apply_snapshot(self.monitor.latest)
 
-            QLabel {
-                color: #dce9f5;
-                background: transparent;
-            }
+    def set_active(self, active):
+        self.active = active
+        if active and self.monitor.latest is not None:
+            self.apply_snapshot(self.monitor.latest)
+            self.graph.cpu.clear()
+            self.graph.ram.clear()
+            for cpu, ram in self.monitor.history:
+                self.graph.cpu.append(cpu)
+                self.graph.ram.append(ram)
+            self.graph.update()
 
-            QProgressBar {
-                background: #2b3d53;
-                border: none;
-                border-radius: 3px;
-            }
-
-            QProgressBar::chunk {
-                background: #22d3ee;
-                border-radius: 3px;
-            }
-        """)
-
-        self.collector = Collector()
-        self.runner = Runner(self)
-        self.runner.result.connect(self.apply_snapshot)
-        self.runner.failed.connect(self.show_error)
-        QApplication.instance().aboutToQuit.connect(self.runner.shutdown)
-
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.refresh)
-        self.timer.start(2000)
-
-        self.refresh()
+    @Slot(object)
+    def receive_snapshot(self, snapshot):
+        if self.active:
+            self.apply_snapshot(snapshot)
 
     @Slot()
     def refresh(self):
-        self.runner.start(self.collector.collect)
+        self.monitor.refresh()
 
     @Slot(str)
     def show_error(self, error):
@@ -204,7 +199,8 @@ class MonitorDashboard(QWidget):
                 )
 
             self.temperature.setText(
-                "\n".join(temperatures[:6])
+                "\n".join(temperatures[:3] if self.compact else temperatures)
+                + (f"\n+ {len(temperatures) - 3} capteur(s) dans le HUD" if self.compact and len(temperatures) > 3 else "")
             )
 
         else:

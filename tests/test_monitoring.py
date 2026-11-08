@@ -88,3 +88,16 @@ def test_process_disappears(monkeypatch):
     monkeypatch.setattr(psutil, "process_iter", lambda attrs: [gone])
     monkeypatch.setattr(system.time, "sleep", lambda n: None)
     assert system.top_processes().startswith("TOP PROCESSUS")
+
+
+def test_alert_history_contains_only_emitted_alerts(monkeypatch):
+    monkeypatch.setattr(intelligence, "notify", Mock())
+    engine = intelligence.AlertEngine()
+    engine.check(95, 0, 0)
+    engine.check(95, 0, 0)
+    assert not engine.recent
+    engine.check(95, 0, 0)
+    assert len(engine.recent) == 1
+    assert "CPU à 95 %" in engine.recent[0]
+    engine.check(95, 0, 0)
+    assert len(engine.recent) == 1

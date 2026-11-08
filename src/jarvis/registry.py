@@ -1,5 +1,6 @@
 """Catalogue unique : résolution sans effets de bord, aide et handlers explicites."""
 from dataclasses import dataclass
+from importlib.metadata import version
 import re
 from collections.abc import Callable
 
@@ -74,7 +75,7 @@ def modes_list() -> str:
 
 
 def help_text() -> str:
-    lines = ["J.A.R.V.I.S. V1.0 — COMMANDES DISPONIBLES"]
+    lines = [f"J.A.R.V.I.S. V{version('jarvis')} — COMMANDES DISPONIBLES"]
     category = None
     for entry in COMMANDS:
         if entry.category != category:

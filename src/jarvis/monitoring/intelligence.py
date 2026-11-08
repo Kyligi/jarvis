@@ -1,4 +1,5 @@
 
+from collections import deque
 import logging
 from jarvis.persistence.sqlite import connect
 from jarvis.config import settings
@@ -232,6 +233,7 @@ class AlertEngine:
         }
 
         self.last_alert = {}
+        self.recent = deque(maxlen=20)
 
         # Une alerte maximum toutes les 5 minutes
         # pour chaque ressource.
@@ -279,6 +281,7 @@ class AlertEngine:
                 continue
 
             self.last_alert[name] = now
+            self.recent.append(f"{time.strftime('%H:%M:%S')} — {name.upper()} à {value:.0f} % (seuil {limit} %)")
 
             notify(
                 "Jarvis — Alerte système",

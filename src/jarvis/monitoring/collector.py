@@ -16,6 +16,7 @@ class Snapshot:
     battery: object
     sensors: dict[str, float]
     warning: str = ""
+    alerts: tuple[str, ...] = ()
 
 
 class Collector:
@@ -43,4 +44,4 @@ class Collector:
                     "error_type": type(error).__name__,
                 })
                 warning = "Historique indisponible"
-        return Snapshot(cpu, ram, disk, battery, sensors, warning)
+        return Snapshot(cpu, ram, disk, battery, sensors, warning, tuple(self.alerts.recent))
