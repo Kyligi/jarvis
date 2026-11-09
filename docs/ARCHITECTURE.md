@@ -1,4 +1,4 @@
-# Architecture V1.3
+# Architecture V1.4
 
 ## Deux fenêtres et un contexte partagé
 
@@ -252,3 +252,28 @@ navigation émettent `page_requested` ; Mini réutilise son instance HUD unique.
 Le thème Nebula inclut les onglets des modes. Le rendu hors écran a été inspecté.
 Les connexions thread/GUI suivent la documentation officielle
 [signaux Qt entre threads](https://doc.qt.io/qtforpython-6/overviews/qtdoc-threads-qobject.html).
+
+## Interface vocale V1.4
+
+`AppContext` possède `VoiceBridge` (signaux Qt), qui possède `VoiceController`
+(indépendant de Qt). Un thread audio au plus exécute la capture, puis Whisper,
+ou la synthèse Piper et la lecture. Les snapshots immutables sont rendus dans
+Mini, la barre permanente HUD et la neuvième page Voix. Le timer d'expiration
+ne lance aucun traitement audio. Les vues n'accèdent jamais directement au micro.
+
+La capture PipeWire fournit du PCM mono 16 kHz signé 16 bits, borné en mémoire.
+Les adaptateurs CLI ont annulation, délai maximal et récolte des processus.
+Les dossiers temporaires privés disparaissent à la sortie normale des adaptateurs.
+Le moteur STT est rechargé par invocation ; aucun serveur réseau n'est ajouté.
+
+La transcription attend un clic (30 s, consommation unique), puis `CommandBus.submit`
+réutilise le registre et toutes les validations existantes. Les codes de confirmation
+V1.3 restent exclusivement textuels. La voix n'a ni dispatcher bureau ni catalogue
+parallèle. La file TTS accepte un travail, sans backlog ; arrêt et fermeture invalident
+les opérations audio et empêchent une réponse orale tardive après annulation.
+
+`voice.toml` contient une table privée `[voice]`, écrite atomiquement indépendamment
+des préférences métier. Les commandes activer/couper sont des changements de session.
+`voice_ipc.py` expose seulement toggle dans un socket Unix privé à l'utilisateur ;
+aucune commande arbitraire, activation de fenêtre ou modification Hyprland.
+Voir [le contrat et les limitations](VOICE.md), notamment le wake word non raccordé.

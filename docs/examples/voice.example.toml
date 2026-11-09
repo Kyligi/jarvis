@@ -1,0 +1,22 @@
+[voice]
+enabled = false
+push_to_talk_mode = "toggle"
+microphone_device = ""
+output_device = ""
+stt_backend = "whisper.cpp"
+stt_executable = "whisper-cli"
+stt_model = ""
+tts_backend = "piper"
+tts_executable = "piper"
+tts_voice = ""
+spoken_responses = false
+tts_speed = 1.0
+tts_volume = 0.7
+wake_word_enabled = false
+wake_word_model = ""
+wake_word_threshold = 0.7
+max_recording_seconds = 15.0
+silence_seconds = 1.5
+silence_threshold = 0.015
+timeout_seconds = 60.0
+store_recordings = false

@@ -46,3 +46,10 @@ secrets.toml
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local voice models and generated audio (explicit installation only)
+*.onnx
+*.onnx.json
+ggml-*.bin
+*.wav
+voice-corpus/

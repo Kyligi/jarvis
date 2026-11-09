@@ -1,11 +1,17 @@
-# J.A.R.V.I.S. V1.3 — Modes et scénarios personnalisables
+# J.A.R.V.I.S. V1.4 — Assistant vocal local
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
 La V1.3 ajoute un moteur de scénarios à huit actions autorisées, leur éditeur HUD,
 la prévisualisation, les confirmations de déplacement, l’annulation coopérative,
 l’historique et les modes personnalisables. Les fonctionnalités V1.2 sont conservées.
-Le registre expose **59 commandes** ; aucun push ni changement système n’est requis.
+La V1.4 ajoute le push-to-talk, une page Voix et les adaptateurs locaux PipeWire,
+whisper.cpp CPU et Piper OHF. Microphone fermé au démarrage, validation visible
+avant commande, interruption et paramètres TOML privés. Les moteurs/modèles sont
+à installer volontairement ; la validation matérielle STT/TTS reste à effectuer.
+Le wake word n'est pas activable faute de validation. Voir [Voix](docs/VOICE.md).
+Le registre conserve les 59 commandes historiques et ajoute 10 commandes vocales.
+Aucun push ni changement système n’est requis.
 Voir le [guide des scénarios](docs/SCENARIOS.md), son
 [exemple de révisions](docs/examples/revisions.json) et la [recette](docs/VALIDATION.md).
 
@@ -70,7 +76,7 @@ permet de lui donner le focus, choisir sa destination, la rendre flottante ou
 mosaïque, ou la centrer. Les lectures et actions utilisent des workers ; Actualiser
 recharge l’inventaire. Une erreur efface la sélection et une cible fermée est refusée.
 Les boutons de disposition affichent un plan dans la console : y saisir le code de
-confirmation fourni. `aide` expose automatiquement les **59 commandes**.
+confirmation fourni. `aide` expose automatiquement les **69 commandes**.
 
 ### Préférences Nebula
 
@@ -220,3 +226,17 @@ Depuis la console, la fenêtre active peut être Mini/HUD : utiliser alors la s�
 explicite de la page Fenêtres. Les sessions et ouvertures de projets conservent leur
 comportement validé : la déduplication globale d’éditeur/terminal concerne les modes,
 pas la reprise de fichiers ou de répertoires de projets différents.
+
+## Voix V1.4
+
+Ouvrir **Voix** dans le HUD, renseigner les exécutables/modèles locaux, autoriser
+le push-to-talk puis Enregistrer. Cliquer Microphone dans Mini ou HUD, parler,
+cliquer de nouveau et vérifier la transcription avant **Valider**. Le bouton
+Annuler / couper le son reste accessible pendant les opérations audio.
+`ouvre les paramètres vocaux` ouvre directement la page ; `aide` décrit le catalogue.
+Les paramètres vocaux sont séparés dans `data_dir/voice.toml`.
+
+Le raccourci optionnel `jarvis --voice-toggle` adresse le processus existant sans
+modifier le bureau. SUPER+SHIFT+V a été vérifié libre mais **n'a pas été installé**.
+Voir les [instructions, licences, limites et recette manuelle](docs/VOICE.md).
+Aucune fonction V1.5, IA conversationnelle, API distante ou téléchargement implicite.

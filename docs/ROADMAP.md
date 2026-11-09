@@ -30,3 +30,17 @@ simulés passent. Les validations V1.0–V1.2 ont été déclarées par l’util
 lancement de cette mission. Les tests hors écran V1.3 et la revue des captures ne
 remplacent pas les vérifications du raccourci, des fenêtres, des applications et
 des sessions sur le bureau Omarchy. Suivre [VALIDATION.md](VALIDATION.md).
+
+## V1.4 — implémentation vocale locale (9 novembre 2026)
+
+- Livré : adaptateurs PipeWire/whisper.cpp CPU/Piper OHF, service sans Qt,
+  états, annulation, transcription et validation visible, registre commun,
+  commandes vocales, Mini/HUD, paramètres privés, IPC push-to-talk optionnel.
+- Automatisation : périphériques simulés, garde wake word sans moteur actif,
+  tests de non-régression et générateur explicite de corpus français.
+- À valider matériellement : moteurs et voix installés volontairement, français,
+  latences/RAM/CPU, comportement micro/sortie, raccourci natif et fin de processus.
+- Non livré : écoute continue openWakeWord, hold-to-talk, accélération Vulkan,
+  réutilisation du modèle chargé, corpus WAV déjà généré. Ces points ne sont pas
+  marqués terminés. Le guide VOICE décrit les raisons et la recette.
+- V1.5 non commencée : aucune intégration LLM ou conversation générale.

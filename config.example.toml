@@ -14,3 +14,6 @@ notion_desktop = "notion"
 travail = 3
 gaming = 4
 etudes = 5
+
+# V1.4 : préférences vocales dans data_dir/voice.toml, pas dans ce fichier.
+# Voir docs/examples/voice.example.toml et docs/VOICE.md.

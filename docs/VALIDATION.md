@@ -278,3 +278,40 @@ Les syntaxes historiques ont été conservées et testées par inspection des ar
 sans changer le bureau pendant la validation automatique. Les capteurs réels et
 l'apparition effective des fenêtres doivent être contrôlés sur la machine.
 Le résultat d'un diagnostic est ponctuel, pas une preuve de l'origine d'un problème.
+
+## V1.4 — contrôles du 9 novembre 2026
+
+Audit initial : arbre propre, HEAD `7efda72`, commits V1.3 présents. Lecture du
+registre, confirmations/scénarios, contextes Mini/HUD et workers. Base : **321 tests
+réussis en 5,28 s**. Python uv 3.13.18, système 3.14.8 ; dépendances Python inchangées.
+
+Inventaire audio en lecture seule : PipeWire 1.6.9, WirePlumber 0.5.18, une source
+analogique et une sortie analogique Ryzen, Wayland / Hyprland 0.56.2. Aucun flux
+micro créé. SUPER+SHIFT+V libre dans l'inventaire ; aucun binding modifié.
+`vulkaninfo --summary` : Radeon 860M RADV, Mesa 26.2.5. Cette vérification n'est
+pas un benchmark Whisper. Aucun moteur Whisper/Piper trouvé dans le PATH.
+
+Tests V1.4 avec périphériques simulés : états, arrêt/annulation, texte vide/inconnu,
+incertitude, expiration et usage unique, confirmations sensibles refusées à la voix,
+confirmation scénario V1.3 préservée, modèle absent, périphérique absent/déconnecté,
+configuration privée/invalide, sélection, PCM 16 kHz, sortie TTS, timeout/récolte,
+file sans accumulation, réponse tardive après arrêt, signaux/bus Qt, fermeture,
+garde wake word opt-in/faux positifs/cooldown, absence d'imports réseau dans le
+service, 59 commandes historiques et aide étendue. Les tests globaux interdisent
+Popen/run réels, isolent les préférences/bases et utilisent Qt hors écran.
+
+Les captures Mini et des neuf pages HUD ont été générées par les tests et examinées
+hors écran ; réduction du panneau vocal et suppression des contrôles dupliqués.
+Ce rendu n'est pas une validation native Wayland de la V1.4.
+
+Limites : pas de micro physique, de transcription, de génération/lecture Piper,
+de corpus audio généré, de wake word réel, ni de mesure de latence ou consommation
+STT/TTS. Les quatre phrases originales et le générateur/benchmark local sont dans
+`tools/voice_corpus.py` ; il ne s'exécute pas pendant pytest. Suivre la
+[recette vocale détaillée](VOICE.md#corpus-et-recette-manuelle) après installation
+volontaire des moteurs et modèles. Pas de lint configuré dans pyproject.toml.
+
+Validation finale V1.4 : `uv sync --locked` réussi (version 1.4.0, dépendances
+inchangées), `uv run pytest -q` : **384 réussis en 6,05 s** ;
+`uv run python -m compileall -q src/jarvis` et `git diff --check` réussis.
+Aucun outil de lint supplémentaire configuré ou prétendu exécuté.

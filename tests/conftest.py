@@ -16,6 +16,8 @@ def isolated(tmp_path, monkeypatch):
     from jarvis.modes import manager as modes
     from jarvis.monitoring import intelligence
     from jarvis.memory import database
+    from jarvis.voice import config as voice_config
+    monkeypatch.setattr(voice_config, "PATH", tmp_path / "voice.toml")
     from jarvis import preferences
     from jarvis.scenarios import storage
     from jarvis.scenarios.engine import engine
