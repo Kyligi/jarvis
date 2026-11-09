@@ -86,10 +86,8 @@ class Plan:
 pending: Plan | None = None
 
 
-@readable
-def preview(name: str):
-    global pending
-    pending = None
+def build_plan(name: str, workspace=None):
+    """Construction pure du plan ; seules des lectures Hyprland sont effectuées."""
     rows = service.windows()
     notes, steps = [], []
     profiles = {
@@ -105,6 +103,9 @@ def preview(name: str):
         notes.append("Mosaïque gérée par le layout Hyprland actuel, sans ordre exact garanti.")
     elif name in profiles:
         number, groups = profiles[name]
+        if workspace is not None:
+            from jarvis.services.windows import workspace as validate_workspace
+            number = validate_workspace(workspace)
         for index, classes in enumerate(groups):
             matches = [w for w in rows if application_class(w.app) in classes and not w.protected]
             if len(matches) != 1:
@@ -118,9 +119,18 @@ def preview(name: str):
         notes.append("Réutilisation uniquement ; aucun jeu déplacé, aucune application lancée.")
     else:
         raise WindowError("Disposition inconnue.")
-    if not steps:
-        return "Aucune action à appliquer.\n" + "\n".join(notes)
-    pending = Plan(name, tuple(steps), time.monotonic() + 60, secrets.token_hex(4), tuple(notes))
+    return Plan(name, tuple(steps), time.monotonic() + 60, secrets.token_hex(4), tuple(notes))
+
+
+@readable
+def preview(name: str):
+    global pending
+    pending = None
+    plan = build_plan(name)
+    if not plan.steps:
+        return "Aucune action à appliquer.\n" + "\n".join(plan.notes)
+    pending = plan
+    steps, notes = plan.steps, plan.notes
     return "Prévisualisation (valable 60 s) :\n" + "\n".join(
         f"{w.describe()} → bureau {number}, {kind}" for w, number, kind in steps
     ) + "\n" + "\n".join(notes) + f"\nConfirmer avec : confirme disposition {pending.token}\nAnnuler : annule disposition"
@@ -158,3 +168,23 @@ def cancel():
     global pending
     pending = None
     return "Disposition annulée."
+
+
+def execute_plan(plan, cancelled=lambda: False):
+    """Exécution typée : les erreurs remontent au moteur, jamais converties en succès."""
+    for window, _, _ in plan.steps:
+        current = service.validate(window)
+        if current.fullscreen or (current.workspace, current.monitor, current.floating) != (window.workspace, window.monitor, window.floating):
+            raise WindowError("Organisation modifiée : recommencez la prévisualisation.")
+    completed = 0
+    for window, number, kind in plan.steps:
+        if cancelled():
+            return ('cancelled', f'{completed} fenêtre(s) traitée(s), suivantes annulées ; aucun rollback.')
+        if kind == 'tile':
+            service.act('tile', window)
+        else:
+            service.act('move', window, number)
+            if kind != 'move':
+                service.half(window, kind)
+        completed += 1
+    return f'{completed} fenêtre(s) traitée(s). ' + '\n'.join(plan.notes)

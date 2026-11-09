@@ -84,6 +84,20 @@ def activate_mode(name):
     if name not in MODES:
         return "Mode inconnu."
 
+    from . import profiles
+    try:
+        customized = profiles.load()[name] != profiles.defaults()[name]
+        if customized:
+            from jarvis.scenarios.engine import engine
+            response = engine.request(profiles.scenario_for_mode(name))
+            if 'confirme scénario' not in response:
+                state = engine.status()
+                if state and state['state'] == 'success':
+                    save_mode(name)
+            return response
+    except (ValueError, OSError, RuntimeError) as error:
+        return f"Mode non activé : {error}"
+
     profile = MODES[name]
 
     try:
@@ -174,7 +188,11 @@ def mode_status():
     if name not in MODES:
         return "Aucun mode Jarvis enregistré."
 
-    profile = MODES[name]
+    from .profiles import load
+    try:
+        profile = dict(MODES[name], workspace=load()[name]['workspace'])
+    except (ValueError, OSError) as error:
+        return f"Mode enregistré : {name}. Configuration indisponible : {error}"
 
     return (
         f"Mode enregistré : {name.capitalize()}\n"
