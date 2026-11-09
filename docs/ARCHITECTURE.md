@@ -1,4 +1,4 @@
-# Architecture V1.2
+# Architecture V1.3
 
 ## Deux fenêtres et un contexte partagé
 
@@ -15,7 +15,7 @@ HudWindow (classe jarvis-hud) ────┘    ├─ CommandBus → Runner �
 
 Les deux fenêtres utilisent Qt Widgets et le thème central `interface/theme.py`.
 `interface/components.py` fournit les cartes, labels en texte brut et la console.
-Les sept pages sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
+Les huit pages sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
 ni dispatcher Hyprland. `services/overview.py` réutilise les services métier et
 assemble les lectures nécessaires à la présentation.
 
@@ -212,3 +212,43 @@ API Qt vérifiée avec la documentation officielle
 [QTreeWidget](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/QTreeWidget.html).
 Les constructeurs Lua ont été vérifiés sur l’installation 0.56.2 par des assertions
 sans `hl.dispatch`. Cette vérification ne constitue pas une recette de placement réel.
+
+
+## Scénarios et modes V1.3
+
+`scenarios/model.py` est le schéma fermé et le catalogue des paramètres.
+`storage.py` fournit JSON atomique, contrôle des révisions, erreurs de lecture
+explicites et verrou d’écriture ; `actions.py` adapte les services existants.
+`engine.py` valide, prévisualise, confirme, sérialise, exécute et journalise.
+`commands.py` ne fait que présenter les résultats au registre central.
+Voir [SCENARIOS.md](SCENARIOS.md) pour le modèle complet, les contrats et les limites.
+
+Le moteur est indépendant de Qt et synchrone : le bus l’exécute dans son `Runner`
+existant. Ses observateurs reçoivent des copies des événements ; le contexte relaye
+ceux-ci par un Signal Qt vers les slots GUI. Le moteur n’accède jamais aux widgets.
+L’annulation et l’état en mémoire constituent deux routes spéciales non bloquantes
+du bus ; aucune écriture ni lecture disque n’est faite sur le thread GUI pour elles.
+Les autres commandes gardent le verrou du bus. Fermer Mini demande l’annulation,
+attend les tâches, puis détache l’observateur.
+
+La prévisualisation utilise les lectures Hyprland et des connexions SQLite en mode
+lecture seule, explicitement fermées. Elle n’appelle pas les helpers historiques qui
+initialisent les tables. `window_commands.build_plan` a été extrait de la
+prévisualisation V1.2 sans modifier son protocole de confirmation historique.
+`execute_plan` conserve les protections du service unique et propage les erreurs
+structurées au moteur ; il vérifie l’annulation entre les fenêtres.
+
+`modes/profiles.py` compose un scénario éphémère pour les profils personnalisés.
+Sans surcharge, `modes/manager.py` conserve exactement le parcours historique.
+Les valeurs TOML sont importées en mémoire, puis les modifications sont enregistrées
+dans `modes.json`. Les fichiers métier, préférences UI et bases historiques ne sont
+ni migrés destructivement ni réinitialisés. Une association référence un identifiant
+stable et ne peut pas créer de récursion : le catalogue n’expose aucune action
+« lancer un scénario » ou « activer un mode ».
+
+Les nouvelles pages n’ont pas de routeur de commandes : leur CRUD appelle le store
+via `submit_operation`, les activations passent par le registre. Les commandes de
+navigation émettent `page_requested` ; Mini réutilise son instance HUD unique.
+Le thème Nebula inclut les onglets des modes. Le rendu hors écran a été inspecté.
+Les connexions thread/GUI suivent la documentation officielle
+[signaux Qt entre threads](https://doc.qt.io/qtforpython-6/overviews/qtdoc-threads-qobject.html).

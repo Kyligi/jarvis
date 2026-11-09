@@ -1,3 +1,85 @@
+# Validation V1.3
+
+## Résultats automatisés
+
+- Base du chantier : dépôt propre, **233 tests V1.2 réussis**.
+- Résultat V1.3 : **321 tests réussis**, code de sortie 0, dont les tests historiques.
+- `uv sync --locked` : réussi, version locale 1.3.0, dépendances inchangées.
+- `uv run pytest -q` : réussi, Qt hors écran et tous les processus simulés.
+- `uv run python -m compileall -q src/jarvis` et `git diff --check` : réussis.
+- Exemple JSON validé par le schéma ; registre validé avec 59 identifiants uniques.
+- Aucun linter ou autre outil qualité n’est configuré dans `pyproject.toml`.
+- Captures des huit pages générées hors écran ; revue visuelle Modes/Scénarios.
+  Les formulaires Modes ont été regroupés en onglets pour éviter le débordement.
+- Aucun programme réel, déplacement de fenêtre, profil système ou fichier de projet
+  utilisateur modifié par les tests. Les fixtures isolent aussi scénarios et modes.
+
+Couverture ajoutée : schémas stricts, clés répétées, versions inconnues préservées,
+CRUD, révisions concurrentes, écriture refusée, noms ambigus, paramètres et actions
+interdits, preview sans écriture/création SQLite ni mutation Hyprland, ordre et
+instantanés de progression, stop/continue, annulation coopérative, sérialisation
+entre moteurs, confirmations liées aux révisions/expirées/consommées, historique
+borné et invalide, journal indisponible, modes persistants/réinitialisation,
+associations, Notion desktop/webapp, Jarvis/plein écran, dispositions partielles,
+registre/aide/alias/collisions, navigation depuis Mini, édition et suppression HUD,
+prévisualisation en worker, annulation pendant un worker et erreurs de permissions.
+
+Un premier test de permission HUD a révélé que le rafraîchissement remplaçait le
+message d’erreur : correction pour conserver celui-ci dans le panneau résultat,
+puis suite complète réussie. Pas de couverture en pourcentage annoncée.
+
+## Recette manuelle V1.3 Omarchy — à effectuer
+
+Les validations V1.0, V1.1 et V1.2 ont été déclarées par l’utilisateur à l’ouverture
+de cette mission. **L’agent n’a pas effectué la recette native V1.3.**
+
+- [ ] Démarrer `uv run jarvis`, vérifier V1.3 dans aide/Paramètres et les 59 commandes.
+  Ouvrir/masquer Mini avec SUPER+SHIFT+J ; ouvrir/fermer/réouvrir le HUD unique.
+  Contrôler classes `jarvis`, `jarvis-hud`, `special:jarvis` et `jarvis-toggle` inchangés.
+- [ ] `configure mode Études` : onglet Études choisi ; workspace 5, browser et notion.
+  Changer le workspace, enregistrer, redémarrer, vérifier la persistance puis restaurer
+  les valeurs par défaut. Vérifier Travail 3, Gaming 4 et les préférences Nebula intactes.
+- [ ] `ouvre scénarios` : créer Révisions, ajouter workspace 5, browser, notion et
+  disposition études. Éditer nom/description, désactiver/réactiver, réordonner, retirer
+  une étape, enregistrer. Dupliquer ; refuser puis accepter une suppression.
+- [ ] Prévisualiser : aucun déplacement/lancement/changement de bureau ; lire les
+  effets annoncés et les applications absentes. Tester un scénario désactivé.
+- [ ] Lancer Révisions : aucun effet avant confirmation. Annuler, refaire, attendre
+  l’expiration, refaire et confirmer. Vérifier Chrome et `gtk-launch notion`, puis
+  leur réutilisation sans doublon. Contrôler les positions seulement après confirmation.
+- [ ] Si les fenêtres ne sont pas encore visibles à l’étape disposition, celle-ci
+  signale les groupes absents : réappliquer après leur apparition. Aucune attente
+  automatique de fenêtre n’est promise dans V1.3.
+- [ ] Créer Développement Rust : workspace 3, resume_project Rust, open_application
+  terminal avec reuse, apply_layout developpement, show_project_objective. Choisir
+  auparavant un projet de test. Vérifier objectif et fichiers inchangés.
+- [ ] Avec une session de test sauvegardée, tester restore_session ; vérifier les
+  fichiers suivis, le dossier du terminal et le workspace Travail historique du TOML.
+- [ ] Créer Gaming avec Steam sur 4. Tester la préservation des fenêtres plein écran
+  et des classes de jeu avec mocks en priorité ; ne pas déplacer une partie active.
+- [ ] Deux fenêtres Foot : une action ciblée par classe doit échouer pour ambiguïté,
+  jamais sélectionner arbitrairement. Une cible Jarvis doit être refusée.
+- [ ] Tester une étape indisponible avec stop puis continue_on_error : étapes ignorées
+  ou poursuivies, état global failed. Vérifier les résultats partiels sans rollback.
+- [ ] Pendant un scénario suffisamment long, utiliser Annuler dans Mini ou HUD,
+  puis état scénario. Aucune nouvelle étape ; applications déjà ouvertes conservées.
+  Naviguer/masquer le HUD pendant l’exécution, vérifier sa réactivité.
+- [ ] Examiner l’historique, sélectionner une exécution et ses étapes ; redémarrer.
+  Les états persistent, les détails privés restent seulement en mémoire.
+- [ ] Donner deux scénarios le même nom : `lance scénario NOM` doit lister les
+  correspondances ; lancer ensuite par identifiant. Vérifier les variantes accentuées.
+- [ ] Associer un scénario à un mode ; vérifier sa composition et la confirmation.
+  Modifier le profil ou scénario après demande de confirmation : lancement refusé.
+- [ ] Dans un répertoire de données de test, introduire un JSON invalide/une version
+  inconnue : avertissement visible, fichier préservé. Ne pas altérer les données réelles.
+
+Limites : pas de rollback, pas d’attente automatique d’apparition des fenêtres,
+pas de reprise d’un scénario interrompu par crash, journal final seulement,
+messages privés non conservés dans l’historique. Les validations IPC restent
+non atomiques. Voir [SCENARIOS.md](SCENARIOS.md) pour les politiques exactes.
+
+---
+
 # Validation V1.2
 
 ## Résultat automatisé

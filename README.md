@@ -1,11 +1,13 @@
-# J.A.R.V.I.S. V1.2 — Fenêtres Omarchy
+# J.A.R.V.I.S. V1.3 — Modes et scénarios personnalisables
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
-La V1.2 ajoute le contrôle des fenêtres et une septième page **Fenêtres** au HUD
-Nebula. Les 30 commandes historiques restent disponibles ; 20 commandes couvrent
-l’inventaire, les actions ciblées et les dispositions avec confirmation.
-Les versions suivantes restent planifiées dans [la roadmap](docs/ROADMAP.md).
+La V1.3 ajoute un moteur de scénarios à huit actions autorisées, leur éditeur HUD,
+la prévisualisation, les confirmations de déplacement, l’annulation coopérative,
+l’historique et les modes personnalisables. Les fonctionnalités V1.2 sont conservées.
+Le registre expose **59 commandes** ; aucun push ni changement système n’est requis.
+Voir le [guide des scénarios](docs/SCENARIOS.md), son
+[exemple de révisions](docs/examples/revisions.json) et la [recette](docs/VALIDATION.md).
 
 ## Installation et démarrage
 
@@ -45,10 +47,17 @@ Le HUD propose :
   d'ouverture utilise `ouvre projet NOM` ; un nom ambigu reste refusé par le moteur.
 - **Sessions** : projet actif, sauvegarde, date, objectif, fichiers suivis, historique,
   sauvegarde et restauration via les commandes existantes.
-- **Modes** : profils et applications prévues, dernier mode enregistré et dernière
-  demande de cette exécution, boutons d'activation. Études conserve `gtk-launch notion`.
+- **Modes** : onglets Travail/Gaming/Études, workspace, applications, réutilisation,
+  disposition, scénario associé, prévisualisation, activation et restauration des valeurs
+  par défaut. Études conserve Chrome et `gtk-launch notion`.
 - **Paramètres** : configuration métier en lecture seule, animations, intervalle du
   monitoring, version, raccourcis et emplacement des logs.
+
+La page **Scénarios** ajoute bibliothèque, recherche, création, duplication,
+suppression confirmée, nom/description/activation, étapes typées réordonnables,
+prévisualisation, lancement, annulation, progression et sélection des exécutions passées.
+Les déplacements demandent `confirme scénario CODE` ; les autres actions s’exécutent
+dans le worker partagé. Le bouton Annuler scénario reste accessible dans Mini.
 
 La barre de commandes globale accepte Entrée ; **Ctrl+L** lui rend le focus. Mini
 et HUD partagent une seule commande en cours, les réponses et un seul collecteur.
@@ -61,7 +70,7 @@ permet de lui donner le focus, choisir sa destination, la rendre flottante ou
 mosaïque, ou la centrer. Les lectures et actions utilisent des workers ; Actualiser
 recharge l’inventaire. Une erreur efface la sélection et une cible fermée est refusée.
 Les boutons de disposition affichent un plan dans la console : y saisir le code de
-confirmation fourni. `aide` expose automatiquement les **50 commandes**.
+confirmation fourni. `aide` expose automatiquement les **59 commandes**.
 
 ### Préférences Nebula
 
@@ -81,7 +90,7 @@ mesures consécutives, donc leur délai dépend de l'intervalle choisi.
 
 Le HUD utilise la classe Wayland `jarvis-hud`, Mini conserve `jarvis`. Cette séparation
 a été contrôlée nativement sur Qt 6.12 / Hyprland 0.56.2, sans modifier le script ni
-les bindings. La V1.1 a été validée manuellement par l’utilisateur ; la recette V1.2 reste à effectuer ; l'identité distincte dépend du backend **Qt Wayland natif**, pas XWayland.
+les bindings. La V1.1 a été validée manuellement par l’utilisateur ; la V1.2 a également été validée manuellement par l’utilisateur au lancement de V1.3 ; l'identité distincte dépend du backend **Qt Wayland natif**, pas XWayland.
 
 ## Configuration
 
@@ -116,6 +125,8 @@ et les accents des chemins et objectifs sont préservés.
 | Dispositions | `organise mon bureau`, `disposition développement`, `disposition études`, `disposition gaming`, `confirme disposition CODE`, `annule disposition` |
 | Projets | `mes projets`, `projets Rust`, `reprends mon projet Rust`, `reprends mon projet Python`, `ouvre projet NOM`, `ouvre rust NOM`, `projet actif`, `état git`, `objectif projet : TEXTE`, `sessions projets` |
 | Sessions | `suis le fichier CHEMIN`, `mes fichiers suivis`, `sauvegarde ma session`, `reprends ma session`, `état session` |
+| Scénarios | `mes scénarios`, `lance scénario NOM`, `prévisualise scénario NOM`, `annule scénario`, `état scénario`, `historique scénarios`, `confirme scénario CODE`, `ouvre scénarios` |
+| Configuration des modes | `configure mode NOM` |
 | Modes | `mode Travail`, `mode Gaming`, `mode Études`, `mode actuel`, `mes modes` ; `active le mode …` reste accepté |
 
 Exemple de session : `ouvre projet MonProjet`, puis `suis le fichier src/main.rs`,
@@ -150,7 +161,9 @@ Le résultat des tests et les limites sont consignés avec l'audit dans
 ## Données et limites
 
 Les bases `projects.db`, `performance.db`, `memory.sqlite3` et l'état
-`active_mode.json` conservent leurs emplacements. Les logs techniques JSON partent
+`active_mode.json` conservent leurs emplacements. Les surcharges de modes vont dans
+`modes.json`, les scénarios dans `scenarios/*.json` et leurs 100 dernières exécutions
+dans `scenarios/journal/runs.json`. Ces fichiers sont versionnés et écrits atomiquement. Les logs techniques JSON partent
 sur stderr ; le script d'ouverture existant les capture dans
 `~/.local/state/jarvis.log`. Ils contiennent des identifiants et types d'erreur,
 pas le texte des commandes. Les nouveaux historiques de commandes stockent
@@ -163,7 +176,8 @@ selon la préférence (deux secondes par défaut) et enregistre au plus toutes l
 fermeture attend les tâches en cours. Une application lancée peut échouer après
 son démarrage : Jarvis ne garantit pas qu'une fenêtre est apparue. L'état de mode
 est persistant : réactiver le même mode change de workspace sans relancer ses apps,
-conformément au comportement historique.
+conformément au comportement historique. Les profils personnalisés réappliquent leurs
+étapes avec la politique de réutilisation choisie à chaque activation.
 
 Pas d'IA, voix, Spotify, domotique ou autonomie dans cette version.
 Voir [ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les responsabilités, la sécurité

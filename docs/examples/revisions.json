@@ -1,0 +1,35 @@
+{
+  "id": "exemple_revisions",
+  "name": "Session de révisions",
+  "description": "Réutiliser Chrome et Notion sur le workspace Études. Confirmer la disposition avant exécution.",
+  "schema_version": 1,
+  "enabled": true,
+  "created_at": "2026-11-09T12:00:00+00:00",
+  "updated_at": "2026-11-09T12:00:00+00:00",
+  "actions": [
+    {
+      "id": "bureau",
+      "type": "switch_workspace",
+      "parameters": {"workspace": 5},
+      "failure_policy": "stop"
+    },
+    {
+      "id": "chrome",
+      "type": "open_application",
+      "parameters": {"application": "browser", "reuse": true},
+      "failure_policy": "stop"
+    },
+    {
+      "id": "notion",
+      "type": "open_application",
+      "parameters": {"application": "notion", "reuse": true},
+      "failure_policy": "stop"
+    },
+    {
+      "id": "disposition",
+      "type": "apply_layout",
+      "parameters": {"layout": "etudes", "workspace": 5},
+      "failure_policy": "stop"
+    }
+  ]
+}

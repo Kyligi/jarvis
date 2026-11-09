@@ -17,6 +17,11 @@ def isolated(tmp_path, monkeypatch):
     from jarvis.monitoring import intelligence
     from jarvis.memory import database
     from jarvis import preferences
+    from jarvis.scenarios import storage
+    from jarvis.scenarios.engine import engine
+    monkeypatch.setattr(storage, "ROOT", tmp_path / "scenarios")
+    monkeypatch.setattr(engine, "_state", None)
+    monkeypatch.setattr(engine, "_approval", None)
     monkeypatch.setattr(preferences, "PREFERENCES_PATH", tmp_path / "ui.toml")
     from jarvis.services.windows import service
     monkeypatch.setattr(service, "windows", lambda: [])
