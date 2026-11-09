@@ -98,6 +98,66 @@ def level(pcm):
     return math.sqrt(sum(x*x for x in samples) / max(1, len(samples))) / 32768
 
 
+class CaptureBuffer:
+    """Session-only pre-roll, sample-clock silence and bounded PCM memory.
+
+    The microphone is never opened before explicit activation. Hysteresis keeps
+    quiet endings; the noise estimate only follows sub-threshold idle frames.
+    """
+    def __init__(self, config):
+        self.config = config
+        self.pre = bytearray()
+        self.audio = bytearray()
+        self.pending = b''
+        self.total = 0
+        self.quiet = 0
+        self.speech = False
+        self.noise = 0.0
+        self.done = False
+
+    def feed(self, chunk):
+        if self.done:
+            return
+        self.pending += chunk
+        # Fixed 20 ms frames, independent of PipeWire read boundaries.
+        while len(self.pending) >= 640 and not self.done:
+            frame, self.pending = self.pending[:640], self.pending[640:]
+            self._frame(frame)
+        if self.done:
+            self.pending = b''
+
+    def _frame(self, frame):
+        limit = int(self.config.max_recording_seconds * 16000) * 2
+        frame = frame[:max(0, limit - self.total)]
+        self.total += len(frame)
+        rms = level(frame)
+        threshold = max(self.config.silence_threshold, self.noise * 2.5)
+        active = rms >= threshold * (.6 if self.speech else 1)
+        if not self.speech and not active and self.config.adaptive_noise:
+            self.noise = .95 * self.noise + .05 * rms
+        if not self.speech:
+            if active:
+                self.speech = True
+                self.audio.extend(self.pre)
+                self.pre.clear()
+            else:
+                self.pre.extend(frame)
+                keep = int(self.config.pre_recording_ms * 32) // 2 * 2
+                if len(self.pre) > keep:
+                    del self.pre[:len(self.pre)-keep]
+        if self.speech:
+            self.audio.extend(frame)
+            self.quiet = 0 if active else self.quiet + len(frame)
+        self.done = (self.total >= limit
+                     or self.speech and self.quiet >= self.config.silence_seconds * 32000)
+
+    def finish(self):
+        if self.pending and not self.done:
+            self._frame(self.pending[:len(self.pending)//2*2])
+            self.pending = b''
+        return bytes(self.audio) if self.speech else b''
+
+
 class PipeWireCapture:
     def capture(self, config, stop, cancel, progress):
         check_device(config.microphone_device, 'Audio/Source')
@@ -109,11 +169,9 @@ class PipeWireCapture:
             raise Cancelled()
         process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                                    stderr=subprocess.DEVNULL, bufsize=0)
-        audio = bytearray()
+        buffer = CaptureBuffer(config)
         started = time.monotonic()
         last_data = started
-        last_speech = None
-        limit = int(config.max_recording_seconds * 32000)
         try:
             with selectors.DefaultSelector() as selector:
                 selector.register(process.stdout, selectors.EVENT_READ)
@@ -121,7 +179,7 @@ class PipeWireCapture:
                     now = time.monotonic()
                     if cancel.is_set():
                         raise Cancelled()
-                    if now - started >= config.max_recording_seconds or len(audio) >= limit:
+                    if now - started >= config.max_recording_seconds or buffer.done:
                         break
                     if now - last_data > 2:
                         raise VoiceError('Microphone sans flux : vérifier connexion et permissions.')
@@ -131,31 +189,28 @@ class PipeWireCapture:
                     if not chunk:
                         raise VoiceError('Microphone déconnecté ou capture refusée.')
                     last_data = now
-                    audio.extend(chunk[:limit-len(audio)])
-                    rms = level(chunk)
-                    progress(rms, len(audio)/32000)
-                    if rms >= config.silence_threshold:
-                        last_speech = now
-                    elif last_speech is not None and now - last_speech >= config.silence_seconds:
-                        break
+                    buffer.feed(chunk)
+                    progress(level(chunk), buffer.total/32000)
         finally:
             reap(process)
             process.stdout.close()
         if cancel.is_set():
             raise Cancelled()
-        return bytes(audio[:len(audio)//2*2]) if last_speech is not None else b''
+        return buffer.finish()
 
 
 @dataclass(frozen=True)
 class Transcript:
     text: str
     confidence: float | None = None
+    vad_used: bool = False
+    warning: str = ''
 
 
 class WhisperCLI:
     def transcribe(self, pcm, config, cancel):
         model = model_file(config.stt_model)
-        binary = executable(config.stt_executable)
+        binary = executable(config.stt_executable if config.compute_backend == 'cpu' else config.gpu_executable)
         with tempfile.TemporaryDirectory(prefix='jarvis-stt-') as directory:
             audio = Path(directory) / 'input.wav'
             with wave.open(str(audio), 'wb') as stream:
@@ -164,17 +219,45 @@ class WhisperCLI:
                 stream.setframerate(16000)
                 stream.writeframes(pcm)
             output = Path(directory) / 'result'
-            run([binary, '-m', str(model), '-f', str(audio), '-l', 'fr', '-ng',
-                 '-ojf', '-of', str(output)], cancel, config.timeout_seconds)
+            argv = [binary, '-m', str(model), '-f', str(audio), '-l', 'fr',
+                    '-ojf', '-of', str(output)]
+            if config.compute_backend == 'cpu':
+                argv += ['-ng']
+            if config.whisper_prompt:
+                argv += ['--prompt', config.whisper_prompt]
+            vad_used, warning = False, ''
+            if config.vad_enabled:
+                try:
+                    vad = model_file(config.vad_model)
+                except VoiceError:
+                    warning = 'VAD absent : transcription sans VAD.'
+                else:
+                    try:
+                        run(argv + ['--vad', '--vad-model', str(vad),
+                                    '--vad-speech-pad-ms', '300',
+                                    '--vad-min-speech-duration-ms', '100'],
+                            cancel, config.timeout_seconds)
+                        vad_used = True
+                    except Cancelled:
+                        raise
+                    except VoiceError:
+                        warning = 'Échec VAD : transcription sans VAD.'
+                        output.with_suffix('.json').unlink(missing_ok=True)
+            if not vad_used:
+                run(argv, cancel, config.timeout_seconds)
             try:
                 data = json.loads(output.with_suffix('.json').read_text())
                 segments = data['transcription']
+                if not isinstance(segments, list) or any(not isinstance(s, dict) or not isinstance(s.get('text'), str) for s in segments):
+                    raise ValueError('segments')
                 text = ''.join(s['text'] for s in segments).strip()
+                if len(text) > 2048 or any(ord(c) < 32 and c not in '\n\t' for c in text):
+                    raise ValueError('transcription invalide')
                 scores = [t['p'] for s in segments for t in s.get('tokens', [])
-                          if not t.get('text', '').startswith('[_') and isinstance(t.get('p'), (float, int))]
+                          if not t.get('text', '').startswith('[_') and type(t.get('p')) in (float, int) and math.isfinite(t['p']) and 0 <= t['p'] <= 1]
                 confidence = sum(scores)/len(scores) if scores else None
-                return Transcript(text, confidence)
-            except (OSError, KeyError, TypeError, ValueError) as error:
+                return Transcript(text, confidence, vad_used, warning)
+            except (OSError, KeyError, TypeError, ValueError, AttributeError) as error:
                 raise VoiceError('Réponse Whisper illisible ou incompatible.') from error
 
 

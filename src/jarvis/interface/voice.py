@@ -173,7 +173,7 @@ class VoicePage(QWidget):
         self.active = False
         self.body = QVBoxLayout(self)
         self.body.addWidget(label('Voix locale', 'heading'))
-        self.body.addWidget(label('PipeWire → Whisper CPU → registre Jarvis → Piper OHF → PipeWire', 'muted'))
+        self.body.addWidget(label('PipeWire → Whisper local → registre Jarvis → Piper OHF → PipeWire', 'muted'))
         self.notice = label(self.bridge.warning or 'Aucun téléchargement automatique. Audio temporaire supprimé. Aucun journal de transcription.', 'muted')
         self.notice.setWordWrap(True)
         self.body.addWidget(self.notice)
@@ -187,6 +187,8 @@ class VoicePage(QWidget):
         form.addRow(self.spoken)
         self.fields = {}
         for key, title in [('stt_executable', 'Exécutable whisper-cli'), ('stt_model', 'Modèle multilingue .bin'),
+                           ('vad_model', 'Modèle Silero local (facultatif)'),
+                           ('whisper_prompt', 'Contexte Whisper (vide par défaut)'),
                            ('tts_executable', 'Exécutable Piper OHF'), ('tts_voice', 'Voix française .onnx')]:
             widget = QLineEdit(getattr(value, key))
             self.fields[key] = widget
@@ -202,7 +204,8 @@ class VoicePage(QWidget):
         form.addRow('Sortie', self.output)
         self.numbers = {}
         for key, title, low, high in [('tts_speed', 'Vitesse', .5, 2), ('tts_volume', 'Volume', 0, 1),
-                                     ('max_recording_seconds', 'Durée maximale (s)', 1, 60),
+                                     ('max_recording_seconds', 'Durée maximale (s)', 5, 30),
+                                     ('pre_recording_ms', 'Pré-enregistrement (ms)', 0, 1000),
                                      ('silence_seconds', 'Arrêt après silence (s)', .3, 10),
                                      ('silence_threshold', 'Seuil RMS de parole', .001, .5)]:
             spin = QDoubleSpinBox()
@@ -211,6 +214,12 @@ class VoicePage(QWidget):
             spin.setValue(getattr(value, key))
             self.numbers[key] = spin
             form.addRow(title, spin)
+        self.vad = QCheckBox('Activer Silero VAD (repli sans VAD si indisponible)')
+        self.vad.setChecked(value.vad_enabled)
+        form.addRow(self.vad)
+        self.noise = QCheckBox('Adapter le seuil au bruit de fond')
+        self.noise.setChecked(value.adaptive_noise)
+        form.addRow(self.noise)
         wake = QCheckBox('Wake word — indisponible, modèle non validé')
         wake.setEnabled(False)
         form.addRow(wake)
@@ -255,6 +264,7 @@ class VoicePage(QWidget):
         try:
             value = replace(self.bridge.controller.config, enabled=self.enabled.isChecked(),
                             spoken_responses=self.spoken.isChecked(),
+                            vad_enabled=self.vad.isChecked(), adaptive_noise=self.noise.isChecked(),
                             microphone_device=self.microphone.currentData(), output_device=self.output.currentData(),
                             **{k: w.text() for k, w in self.fields.items()},
                             **{k: w.value() for k, w in self.numbers.items()})

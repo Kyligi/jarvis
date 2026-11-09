@@ -109,6 +109,8 @@ class VoiceController:
         with self.lock:
             if self.cancelled.is_set():
                 raise Cancelled()
+            if not isinstance(result.text, str) or any(ord(c) < 32 for c in result.text):
+                raise VoiceError('Transcription invalide : reformuler une seule commande.')
             text = result.text.strip()
             if not text:
                 self.emit(State.IDLE, message='Transcription vide : aucune commande.')
@@ -123,7 +125,7 @@ class VoiceController:
                 if match and not match.arguments:
                     text, resolved = candidate, match
             if test_only:
-                self.emit(State.IDLE, text=text, message='Test uniquement : aucune exécution.')
+                self.emit(State.IDLE, text=text, message=result.warning + ' Test uniquement : aucune exécution.')
             elif resolved is None:
                 self.emit(State.ERROR, text=text, message='Commande inconnue : aucune approximation exécutée.')
             elif resolved.command.id in {'scenarios.confirm', 'windows.confirm'}:
@@ -132,7 +134,7 @@ class VoiceController:
                 uncertain = result.confidence is None or result.confidence < .75
                 self.pending = (text, self.clock() + 30)
                 self.emit(State.AWAITING_CONFIRMATION, text=text,
-                          message=('Transcription incertaine. ' if uncertain else '') +
+                          message=result.warning + ' ' + ('Transcription incertaine. ' if uncertain else '') +
                           f'Vérifier puis valider : {resolved.command.name} (30 s).')
 
     def take_pending(self):

@@ -29,21 +29,28 @@ class VoiceConfig:
     wake_word_enabled: bool = False
     wake_word_model: str = ''
     wake_word_threshold: float = 0.7
-    max_recording_seconds: float = 15.0
+    max_recording_seconds: float = 12.0
+    pre_recording_ms: float = 300.0
+    adaptive_noise: bool = True
+    vad_enabled: bool = False
+    vad_model: str = ''
+    whisper_prompt: str = ''
+    compute_backend: str = 'cpu'
+    gpu_executable: str = ''
     silence_seconds: float = 1.5
     silence_threshold: float = 0.015
     timeout_seconds: float = 60.0
     store_recordings: bool = False
 
     def __post_init__(self):
-        for key in ('enabled', 'spoken_responses', 'wake_word_enabled', 'store_recordings'):
+        for key in ('enabled', 'spoken_responses', 'wake_word_enabled', 'store_recordings', 'adaptive_noise', 'vad_enabled'):
             if type(getattr(self, key)) is not bool:
                 raise ValueError(f'{key} : booléen requis')
         for key, low, high in (
             ('tts_speed', .5, 2), ('tts_volume', 0, 1),
-            ('wake_word_threshold', .1, 1), ('max_recording_seconds', 1, 60),
+            ('wake_word_threshold', .1, 1), ('max_recording_seconds', 5, 30),
             ('silence_seconds', .3, 10), ('silence_threshold', .001, .5),
-            ('timeout_seconds', 1, 300),
+            ('timeout_seconds', 1, 300), ('pre_recording_ms', 0, 1000),
         ):
             value = getattr(self, key)
             if type(value) not in (int, float) or not math.isfinite(value) or not low <= value <= high:
@@ -54,6 +61,10 @@ class VoiceConfig:
                     raise ValueError(f'{key} : texte invalide')
         if self.push_to_talk_mode != 'toggle' or self.stt_backend != 'whisper.cpp' or self.tts_backend != 'piper':
             raise ValueError('Backend ou mode non pris en charge')
+        if self.compute_backend not in ('cpu', 'vulkan'):
+            raise ValueError('Backend de calcul invalide')
+        if len(self.whisper_prompt) > 256:
+            raise ValueError('Contexte Whisper limité à 256 caractères')
         if self.store_recordings:
             raise ValueError('Le stockage persistant audio est désactivé en V1.4')
         if self.wake_word_enabled:
