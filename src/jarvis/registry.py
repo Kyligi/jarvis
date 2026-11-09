@@ -9,6 +9,7 @@ from jarvis.monitoring import system, intelligence, diagnostics
 from jarvis.projects import manager, sessions
 from jarvis.modes import manager as modes
 from jarvis.modules import projects as legacy_projects
+from jarvis.voice import commands as voice
 from jarvis import omarchy
 from jarvis.services import window_commands as windows
 from jarvis.scenarios import commands as scenarios
@@ -170,6 +171,20 @@ COMMANDS = (
     exact("scenarios.open", "ouvre scénarios", "Ouvrir l’éditeur dans le HUD", ("ouvre scénarios", "ouvre les scénarios"), scenarios.open_page, "Scénarios"),
     Command("modes.configure", "configure mode NOM", "Ouvrir les paramètres du mode dans le HUD", ("configure mode Études",), scenarios.configure, "Modes", pattern=r"configure (?:le )?mode (.+)"),
 
+    *(exact(f"voice.{action}", name, description, (name,),
+            lambda action=action: voice.request(action), "Voix")
+      for action, name, description in (
+          ("listen", "écoute", "Appuyer pour démarrer puis arrêter la capture locale"),
+          ("stop", "arrête l'écoute", "Terminer la capture et transcrire"),
+          ("enable", "active la voix", "Autoriser le push-to-talk sans ouvrir le microphone"),
+          ("disable", "coupe la voix", "Annuler la session et désactiver la voix"),
+          ("repeat", "répète", "Relire le dernier résultat vocal"),
+          ("quiet", "arrête de parler", "Interrompre la synthèse et la lecture"),
+          ("status", "état vocal", "Afficher l'état du service vocal"),
+          ("settings", "ouvre les paramètres vocaux", "Ouvrir la page Voix du HUD"),
+          ("wake_on", "active le mot d'activation", "Afficher la disponibilité du wake word expérimental"),
+          ("wake_off", "désactive le mot d'activation", "Maintenir la détection continue désactivée"),
+      )),
 )
 
 

@@ -32,6 +32,9 @@ class JarvisWindow(QWidget):
         layout.addLayout(header)
         self.dashboard = MonitorDashboard(self, self.context.monitor, compact=True)
         layout.addWidget(self.dashboard)
+        from jarvis.interface.voice import VoiceControls
+        self.voice_controls = VoiceControls(self.context.voice)
+        layout.addWidget(self.voice_controls)
         self.console = CommandConsole(self.context.commands)
         layout.addWidget(self.console, 1)
         # Attributs de compatibilité utilisés par les tests et appelants V1.0.
@@ -59,7 +62,7 @@ class JarvisWindow(QWidget):
     @Slot(str)
     def open_page(self, name):
         self.open_hud()
-        self.hud.navigation.setCurrentRow(7 if name == 'scenarios' else 4)
+        self.hud.navigation.setCurrentRow(8 if name == 'voice' else 7 if name == 'scenarios' else 4)
         if name.startswith('modes:'):
             page = self.hud.pages[4]
             page.tabs.setCurrentIndex(page.mode_names.index(name.split(':', 1)[1]))
@@ -69,6 +72,8 @@ class JarvisWindow(QWidget):
         super().showEvent(event)
 
     def hideEvent(self, event):
+        if self.hud is None or not self.hud.isVisible():
+            self.context.voice.controller.cancel()
         self.dashboard.set_active(False)
         super().hideEvent(event)
 

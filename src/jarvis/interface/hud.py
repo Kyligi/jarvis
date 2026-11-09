@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                               QGraphicsOpacityEffect, QPushButton, QSplitter)
 from jarvis.interface import theme
 from jarvis.interface.components import CommandConsole, label
+from jarvis.interface.voice import VoicePage, VoiceControls
 from jarvis.interface.pages.home import HomePage
 from jarvis.interface.pages.system import SystemPage
 from jarvis.interface.pages.projects import ProjectsPage
@@ -40,7 +41,7 @@ class HudWindow(QMainWindow):
         self.navigation.setObjectName("navigation")
         self.navigation.setAccessibleName("Navigation du HUD")
         self.navigation.setFixedWidth(185)
-        self.navigation.addItems(["01   Accueil", "02   Système", "03   Projets", "04   Sessions", "05   Modes", "06   Paramètres", "07   Fenêtres", "08   Scénarios"])
+        self.navigation.addItems(["01   Accueil", "02   Système", "03   Projets", "04   Sessions", "05   Modes", "06   Paramètres", "07   Fenêtres", "08   Scénarios", "09   Voix"])
         sidebar.addWidget(self.navigation, 1)
         mini_button = QPushButton("Retour à Mini")
         mini_button.clicked.connect(self.show_mini)
@@ -53,9 +54,11 @@ class HudWindow(QMainWindow):
         self.connection = label("● Services locaux", "status")
         header.addWidget(self.connection)
         content.addLayout(header)
+        self.voice_controls = VoiceControls(context.voice)
+        content.addWidget(self.voice_controls)
         self.stack = QStackedWidget()
         self.pages = [HomePage(context), SystemPage(context), ProjectsPage(context),
-                      SessionsPage(context), ModesPage(context), SettingsPage(context), WindowsPage(context), ScenariosPage(context)]
+                      SessionsPage(context), ModesPage(context), SettingsPage(context), WindowsPage(context), ScenariosPage(context), VoicePage(context)]
         for page in self.pages:
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)
@@ -104,6 +107,8 @@ class HudWindow(QMainWindow):
         self.pages[self.stack.currentIndex()].set_active(True)
 
     def hideEvent(self, event):
+        if self.mini is None or not self.mini.isVisible():
+            self.context.voice.controller.cancel()
         for page in self.pages:
             page.set_active(False)
         self.animation.stop()

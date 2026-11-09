@@ -66,7 +66,7 @@ class CommandBus(QObject):
         if not text:
             return False
         resolved = resolve(text)
-        if resolved and resolved.command.id in {"scenarios.cancel", "scenarios.status"}:
+        if resolved and resolved.command.id in {"scenarios.cancel", "scenarios.status", "voice.stop", "voice.disable", "voice.quiet", "voice.status", "voice.wake_off"}:
             self.result.emit(resolved.run())
             return True
         if self.busy:
@@ -126,6 +126,8 @@ class AppContext(QObject):
         self.scenario_engine = engine
         self.scenario_listener = self.commands.scenario_progress.emit
         engine.listeners.append(self.scenario_listener)
+        from jarvis.interface.voice import VoiceBridge
+        self.voice = VoiceBridge(self)
         self.preference_runner = Runner(self)
         self.preference_runner.result.connect(self.apply_preferences)
         self.preference_runner.failed.connect(self.preferences_failed)
@@ -157,6 +159,7 @@ class AppContext(QObject):
         if self.stopped:
             return
         self.stopped = True
+        self.voice.shutdown()
         self.scenario_engine.cancel()
         self.monitor.shutdown()
         self.commands.runner.shutdown()
