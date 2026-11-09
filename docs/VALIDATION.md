@@ -328,3 +328,39 @@ les performances Whisper Vulkan restent à valider. Aucun modèle téléchargé.
 
 Résultat automatisé V1.4.1 : **421 tests réussis** (384 conservés + 37 nouveaux),
 `git diff --check` sans erreur. Aucun test ne lance le microphone réel.
+
+## V1.4.2 — Whisper Turbo / Radeon 860M
+
+- [x] État initial propre, historique V1.4.1 inspecté ; **421 tests** initiaux passent.
+- [x] Vulkan matériel vérifié hors sandbox : Radeon 860M / RADV KRACKAN1.
+- [x] En-têtes Vulkan/SPIR-V installés avec autorisation ; binaire Vulkan séparé
+      compilé avec `GGML_VULKAN=ON` depuis le commit whisper.cpp installé.
+- [x] Turbo multilingue téléchargé avec accord explicite depuis la source du
+      projet ; SHA-1 officiel identique, SHA-256 et chargement vérifiés.
+- [x] Poids alloués sur Vulkan0, backend Vulkan0 sélectionné, transcription réelle
+      réussie ; aucun `-ng` sur le chemin Vulkan.
+- [x] Choix HUD CPU/Vulkan, fichier modèle, délai moteur et indication du backend
+      effectif, temps et RSS. Modifications refusées pendant une session active.
+- [x] Modèle/binaire absent, GPU non confirmé, erreur et timeout : aucune commande
+      proposée ; repli CPU manuel avec nouvelle capture, jamais silencieux.
+- [x] Capture PipeWire, pré-enregistrement, silence, Piper, scénarios et
+      confirmations visibles/clavier conservés. Aucun ajout aux 69 commandes.
+- [x] Chargement et transcription hors Qt ; diagnostic stderr borné et drainé,
+      annulation, fin de processus et budget commun VAD/repli testés.
+- [x] Configuration réelle relue et testée via CaptureBuffer → contrôleur →
+      Turbo/Vulkan sur WAV synthétique ; silence rejeté avant transcription,
+      aucune commande en attente (mode test).
+- [x] Configuration Turbo/Vulkan activée, sauvegarde exacte CPU conservée sous
+      `~/.local/share/jarvis/voice.pre-v1.4.2-20261109.toml`.
+- [x] **447 tests réussis** : 421 conservés + 26 nouveaux, dont tests HUD,
+      processus Python jetables, choix CPU/Vulkan, erreurs et protection commandes.
+- [x] Benchmark Turbo seul : 14 essais CPU + 14 Vulkan, aucun échec,
+      19,80 s / 1,65 s moyens ; RSS et limites de mémoire partagée documentées.
+      WER synthétique 60 % des deux côtés : aucun gain humain revendiqué.
+- [ ] Précision sur voix humaine dans l’environnement réel : non mesurée.
+- [ ] Recette manuelle microphone/HUD/Piper par l’utilisateur après relance :
+      non revendiquée par les essais synthétiques.
+
+Preuves, chemins, reproduction, mesures et limites : [rapport V1.4.2](VOICE_V1_4_2.md).
+Les constats « Vulkan reste à valider / aucun modèle téléchargé » de la section
+V1.4.1 décrivent l’ancienne livraison et sont remplacés par ce bilan V1.4.2.

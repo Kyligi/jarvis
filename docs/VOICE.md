@@ -1,15 +1,14 @@
-# Voix locale V1.4
+# Voix locale V1.4.2
 
 ## État livré et limites
 
-V1.4.1 : voir [paramètres, benchmark et recette](VOICE_V1_4_1.md).
-
-Le code fournit capture PipeWire, transcription whisper.cpp CPU et synthèse Piper
-OHF via leurs exécutables locaux. Aucun moteur ni modèle n'est installé ou téléchargé
-par Jarvis. Sur la machine auditée le 9 novembre 2026, les exécutables Whisper/Piper
-étaient absents du PATH. Les périphériques ont été inventoriés sans capturer de son.
-La reconnaissance française, la qualité de la voix et les latences matérielles
-restent **à valider**. Cette livraison n'est pas une validation audio de bout en bout.
+V1.4.2 intègre Whisper large-v3-turbo multilingue et le choix CPU/Vulkan dans
+le HUD. Voir [installation, preuves matérielles et mesures](VOICE_V1_4_2.md).
+La Radeon 860M a exécuté une transcription Turbo avec poids sur Vulkan0.
+Le binaire CPU précédent et Piper sont conservés. Jarvis ne télécharge jamais
+un modèle automatiquement ; l'installation Turbo a été autorisée explicitement.
+La qualité sur voix humaine reste à mesurer ; les mesures synthétiques ne
+permettent pas de promettre une meilleure reconnaissance au microphone.
 
 Le contrôleur ne dépend pas de Qt. `voice/backends.py` expose des adaptateurs
 injectables : `capture(config, stop, cancel, progress)`,
@@ -37,25 +36,32 @@ Consulter les sources officielles avant toute installation :
 [whisper.cpp](https://github.com/ggml-org/whisper.cpp),
 [Piper OHF](https://github.com/OHF-Voice/piper1-gpl),
 [CLI Piper](https://github.com/OHF-Voice/piper1-gpl/blob/main/docs/CLI.md).
-Les commandes suivantes sont proposées, elles n'ont pas été exécutées par l'agent.
+Les commandes génériques suivantes servent de référence pour une autre machine.
+L’installation V1.4.2 réellement effectuée est détaillée dans son rapport.
 Installer les prérequis avec le gestionnaire Omarchy habituel si nécessaire ;
 ne pas utiliser le Python système 3.14 pour l'environnement Jarvis (3.13).
 
-Whisper : cloner volontairement le dépôt officiel dans un dossier dédié, puis :
+Whisper : utiliser un dépôt officiel dans un dossier dédié. La procédure
+V1.4.2 construit `whisper-cli` avec `-DGGML_VULKAN=ON` dans un dossier distinct
+et installe `ggml-large-v3-turbo.bin`, après accord et contrôle d’intégrité.
+Voir [la procédure reproductible](VOICE_V1_4_2.md).
 
-```sh
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=OFF
-cmake --build build -j 4
-# Action réseau volontaire, dans le dépôt whisper.cpp :
-bash models/download-ggml-model.sh base
-```
+Dans Voix, choisir CPU ou Vulkan, renseigner les exécutables distincts et choisir
+le fichier modèle multilingue `.bin` avec le sélecteur local. Les modèles `.en`
+sont refusés. Jarvis passe `-l fr -ojf` et ajoute `-ng` **uniquement en CPU**.
+Chaque invocation recharge le modèle dans le thread audio ; aucun chargement ni
+transcription dans le thread Qt. Pas de serveur permanent. Le délai configurable
+(60 s par défaut) couvre aussi l’éventuelle nouvelle tentative sans VAD.
 
-Choisir `build/bin/whisper-cli` et `models/ggml-base.bin` dans Voix. `small`
-multilingue peut remplacer `base` après comparaison sur les mêmes phrases. Les
-modèles `.en` sont refusés. Jarvis passe `-l fr -ng -ojf` : français, CPU, résultat
-JSON avec tokens. Chaque invocation recharge le modèle ; pas de serveur permanent,
-ni réutilisation du contexte natif dans cette version. Un futur adaptateur peut
-conserver le moteur chargé sans changer les vues. Timeout configurable, 60 s par défaut.
+Le HUD affiche le backend réellement validé de la dernière transcription, le
+modèle, le temps incluant le chargement et le pic RSS échantillonné. Avant une
+transcription, le backend est annoncé comme demandé/non vérifié. Les diagnostics
+Vulkan doivent confirmer une allocation de poids et la sélection de Vulkan0
+(ou autre indice), sans échec d’initialisation. Une simple détection de GPU ne
+suffit pas. En cas d’absence ou d’échec : résultat rejeté, aucune commande en
+attente ; sélectionner CPU, enregistrer et refaire une capture. Pour retrouver
+le comportement précédent, sélectionner également l’ancien modèle small.
+Aucun repli CPU automatique ni réutilisation de la transcription échouée.
 
 Piper : installer le paquet maintenu `piper-tts` dans un environnement isolé, par
 exemple avec `uv tool install piper-tts`, puis vérifier le chemin du binaire `piper`.
@@ -73,8 +79,8 @@ lire le résultat affiché ; aucun résumé inventé. Le texte intégral reste e
 whisper.cpp est sous MIT ; vérifier aussi la provenance/licence du fichier de
 poids choisi ([Whisper](https://github.com/openai/whisper)). Piper OHF est sous GPL-3.0,
 contrairement à l'ancien moteur Rhasspy. Les voix ont des licences et jeux de
-source distincts : leur MODEL_CARD fait autorité. **Aucune voix ni aucun poids
-n'ont été téléchargés ou redistribués par cette livraison.**
+source distincts : leur MODEL_CARD fait autorité. Le modèle Turbo a été téléchargé avec accord explicite ; aucun poids ni voix
+n’est redistribué dans Git.
 
 ## Microphone, paramètres et push-to-talk
 
@@ -159,7 +165,8 @@ physique de la RAM ou d'un support persistant. Aucun modèle dans Git.
   Un JSON absent/incompatible est une erreur lisible. Pas de commande approchante.
 - Piper : `.onnx.json` adjacent, version OHF, sortie disponible, vérifier `piper --help`.
   Les erreurs conservent le résultat écrit ; ne pas réexécuter une action pour réentendre.
-- Les sorties stderr des moteurs sont supprimées pour éviter les textes privés.
+- Les diagnostics Whisper sont lus en mémoire bornée puis supprimés ; seules
+  les preuves de backend et mesures numériques sont conservées, sans texte privé.
   Pour diagnostiquer le moteur, utiliser un corpus non sensible hors Jarvis.
 
 ## AMD et mesures
@@ -167,13 +174,11 @@ physique de la RAM ou d'un support persistant. Aucun modèle dans Git.
 Audit : Python projet 3.13.18 (système 3.14.8), PipeWire 1.6.9, WirePlumber 0.5.18,
 Hyprland 0.56.2, Vulkan Radeon 860M / RADV KRACKAN1 / Mesa 26.2.5.
 `vulkaninfo --summary` réussit. Ni ROCm ni le NPU ne sont utilisés.
-Vulkan disponible ne prouve pas Whisper accéléré. Pour une étude séparée, compiler
-une variante avec `-DGGML_VULKAN=1` et comparer aux mêmes fichiers CPU ; Jarvis
-force `-ng` par défaut. V1.4.1 permet un binaire GPU distinct après validation explicite.
-
-Les mesures synthétiques V1.4.1 et leurs limites figurent dans
-[le rapport V1.4.1](VOICE_V1_4_1.md). Aucune mesure de précision sur voix humaine
-ni de consommation RAM/CPU n'est disponible. Au repos le contrôleur ne crée aucun
+L’utilisation réelle de Whisper Vulkan est vérifiée en V1.4.2 à chaque
+transcription. Les [mesures Turbo CPU/Vulkan](VOICE_V1_4_2.md) incluent temps muraux
+et RSS ; la RSS n’est pas la totalité de la mémoire GPU partagée. Les anciennes
+[mesures V1.4.1](VOICE_V1_4_1.md) restent historiques. La précision sur voix humaine
+n’est pas encore mesurée. Au repos le contrôleur ne crée aucun
 thread audio ni sous-processus ; un timer Qt vérifie l'expiration toutes les 250 ms.
 Cette propriété du code n'est pas une mesure de consommation matérielle.
 

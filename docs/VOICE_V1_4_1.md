@@ -1,5 +1,12 @@
 # Voix V1.4.1 : audit et validation
 
+> Rapport historique. V1.4.2 a depuis compilé et validé Vulkan avec Turbo sur
+> cette machine : voir [le rapport V1.4.2](VOICE_V1_4_2.md). Le choix CPU/Vulkan
+> est désormais dans le HUD, avec contrôle du backend effectif et repli CPU
+> manuel. Les essais base/small ci-dessous n’ont pas été répétés en V1.4.2.
+> Le délai STT est désormais partagé entre VAD et sa nouvelle tentative,
+> et non doublé. Les préférences V1.4.1 originales sont sauvegardées avant activation.
+
 ## Audit et changements
 
 V1.4 : PCM PipeWire mono signé 16 bits, 16 kHz ; seuil RMS fixe 0,015 ;

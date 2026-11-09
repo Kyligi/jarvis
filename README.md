@@ -1,4 +1,4 @@
-# J.A.R.V.I.S. V1.4.1 — Assistant vocal local
+# J.A.R.V.I.S. V1.4.2 — Whisper Turbo et Vulkan
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
@@ -8,13 +8,20 @@ l’historique et les modes personnalisables. Les fonctionnalités V1.2 sont con
 La V1.4 ajoute le push-to-talk, une page Voix et les adaptateurs locaux PipeWire,
 whisper.cpp CPU et Piper OHF. Microphone fermé au démarrage, validation visible
 avant commande, interruption et paramètres TOML privés. Les moteurs/modèles sont
-à installer volontairement ; la validation matérielle STT/TTS reste à effectuer.
+installés volontairement ; la V1.4.2 valide Turbo/Vulkan sur corpus synthétique.
+La qualité sur voix humaine reste à mesurer.
 Le wake word n'est pas activable faute de validation. Voir [Voix](docs/VOICE.md).
+La V1.4.2 ajoute Whisper large-v3-turbo multilingue avec accélération Vulkan
+validée sur la Radeon 860M, le choix CPU/Vulkan dans le HUD et un contrôle du
+backend effectivement utilisé. Le moteur CPU précédent reste disponible ;
+le retour CPU est explicite et exige une nouvelle capture. Voir
+[installation, mesures et limites V1.4.2](docs/VOICE_V1_4_2.md).
+
 La V1.4.1 ajoute un pré-enregistrement de 300 ms, une détection de silence
 avec hystérésis, Silero facultatif et un benchmark reproductible base/small.
 Voir [audit, mesures et validation V1.4.1](docs/VOICE_V1_4_1.md).
 Le registre conserve les 59 commandes historiques et ajoute 10 commandes vocales.
-Aucun push ni changement système n’est requis.
+Les moteurs externes nécessitent une installation locale explicite.
 Voir le [guide des scénarios](docs/SCENARIOS.md), son
 [exemple de révisions](docs/examples/revisions.json) et la [recette](docs/VALIDATION.md).
 

@@ -22,7 +22,10 @@ vad_enabled = false
 vad_model = ""
 # Facultatif : Jarvis, Omarchy, Hyprland, Rust, Python, Git, Steam, Notion.
 whisper_prompt = ""
+# V1.4.2 : choix aussi accessible dans le HUD ; repli CPU manuel seulement.
+# stt_model : fichier local ggml-large-v3-turbo.bin après téléchargement autorisé.
 compute_backend = "cpu"
+# Exécutable construit séparément avec -DGGML_VULKAN=ON.
 gpu_executable = ""
 silence_seconds = 1.5
 silence_threshold = 0.015

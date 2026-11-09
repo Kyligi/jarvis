@@ -1,0 +1,545 @@
+{
+  "model": {
+    "path": "/home/kylian/Projects/jarvis-starter/.local/models/ggml-large-v3-turbo.bin",
+    "sha256": "1fc70f774d38eb169993ac391eea357ef47c88757ef72ee5943879b7e8e2bc69"
+  },
+  "binaries": {
+    "cpu": {
+      "path": "/home/kylian/Applications/whisper.cpp/build/bin/whisper-cli",
+      "sha256": "aff7be80ac9f29669b512237d911220c68ce2af1ee043ffeca6b1943a3c3c79c"
+    },
+    "vulkan": {
+      "path": "/home/kylian/Projects/jarvis-starter/.local/whisper-vulkan/bin/whisper-cli",
+      "sha256": "9d6df8f8ea0b7d282b713b60d225af6a123879b9fecfe775fb4c5a02cd8c7d99"
+    }
+  },
+  "timing": "wall time including loading; alternating backend order per repeat; no warm-up excluded",
+  "memory": "process RSS sampled every <=50ms; not total GPU/shared memory; lower bound on peak",
+  "corpus": "synthetic Piper fr_FR-siwis-medium; does not establish human accuracy",
+  "rows": [
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-1-16k.wav",
+      "sha256": "1839b7437a7ab993396253b2bad1c803003b7e9d68df7bd7ba4ee1a53320a6cf",
+      "expected": "aide",
+      "failure": null,
+      "hypothesis": "Aïc.",
+      "errors": 1,
+      "words": 1,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.400118826999915,
+        "peak_rss_bytes": 1898749952
+      },
+      "silence_insertion": false,
+      "seconds": 27.401632526999947
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-2-16k.wav",
+      "sha256": "3712cad167eb67ba1ecd108ce7b279ab9cc0661c676170900cf5aa2043ba8ee4",
+      "expected": "état système",
+      "failure": null,
+      "hypothesis": "Etat Système.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.035648334000143,
+        "peak_rss_bytes": 1898893312
+      },
+      "silence_insertion": false,
+      "seconds": 27.036745532999703
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-3-16k.wav",
+      "sha256": "64401746408a55e1154cbb2a98caaa20e94a17ef10e21145a12ee7d21de75409",
+      "expected": "mes projets",
+      "failure": null,
+      "hypothesis": "Mes projets",
+      "errors": 0,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.68901372299979,
+        "peak_rss_bytes": 1897017344
+      },
+      "silence_insertion": false,
+      "seconds": 27.689873397000156
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-4-16k.wav",
+      "sha256": "80d988542b07fae608fb86c9072d948d541ace42bd094034b87d10c4ae6c0424",
+      "expected": "Jarvis, aide",
+      "failure": null,
+      "hypothesis": "Jarvie aide.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.750364347999948,
+        "peak_rss_bytes": 1898745856
+      },
+      "silence_insertion": false,
+      "seconds": 27.751326533999872
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-5-16k.wav",
+      "sha256": "f4c5c7ee7651a2417b71bf6634c717033d0333679e9cd51dad886045cee5dad6",
+      "expected": "Je développe avec Python et Rust sur Omarchy.",
+      "failure": null,
+      "hypothesis": "Je développe avec Python et reste sur Omarchi.",
+      "errors": 2,
+      "words": 8,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.18066360900002,
+        "peak_rss_bytes": 1899220992
+      },
+      "silence_insertion": false,
+      "seconds": 27.181847570999707
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-6-16k.wav",
+      "sha256": "fb61cf92c1dd7c5d63671d6076e95f38e574a72adce75980d314847d88382d08",
+      "expected": "Hyprland, Git, Steam et Notion.",
+      "failure": null,
+      "hypothesis": "Ypreslan, J, Steam et Notion.",
+      "errors": 2,
+      "words": 5,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.391409010999723,
+        "peak_rss_bytes": 1899479040
+      },
+      "silence_insertion": false,
+      "seconds": 27.39240079199999
+    },
+    {
+      "backend": "cpu",
+      "repeat": 0,
+      "file": "fr-7-16k.wav",
+      "sha256": "05b97728ddf1c16073bcd09d925956284e78ae3cdaa807fe723066adc35a869c",
+      "expected": "",
+      "failure": null,
+      "hypothesis": "Sous-titrage Société Radio-Canada",
+      "errors": 5,
+      "words": 0,
+      "execution": {
+        "vulkan": false,
+        "seconds": 27.003372576999936,
+        "peak_rss_bytes": 1899114496
+      },
+      "silence_insertion": true,
+      "seconds": 27.00423096700024
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-1-16k.wav",
+      "sha256": "1839b7437a7ab993396253b2bad1c803003b7e9d68df7bd7ba4ee1a53320a6cf",
+      "expected": "aide",
+      "failure": null,
+      "hypothesis": "Aïc.",
+      "errors": 1,
+      "words": 1,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.8472611270003654,
+        "peak_rss_bytes": 138203136
+      },
+      "silence_insertion": false,
+      "seconds": 1.84799950300021
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-2-16k.wav",
+      "sha256": "3712cad167eb67ba1ecd108ce7b279ab9cc0661c676170900cf5aa2043ba8ee4",
+      "expected": "état système",
+      "failure": null,
+      "hypothesis": "Etat Système.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.5967578630002208,
+        "peak_rss_bytes": 203624448
+      },
+      "silence_insertion": false,
+      "seconds": 1.597525945000143
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-3-16k.wav",
+      "sha256": "64401746408a55e1154cbb2a98caaa20e94a17ef10e21145a12ee7d21de75409",
+      "expected": "mes projets",
+      "failure": null,
+      "hypothesis": "Mes projets",
+      "errors": 0,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.5745038979998753,
+        "peak_rss_bytes": 111857664
+      },
+      "silence_insertion": false,
+      "seconds": 1.5752690540002732
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-4-16k.wav",
+      "sha256": "80d988542b07fae608fb86c9072d948d541ace42bd094034b87d10c4ae6c0424",
+      "expected": "Jarvis, aide",
+      "failure": null,
+      "hypothesis": "Jarvie aide.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.6080514609998318,
+        "peak_rss_bytes": 112664576
+      },
+      "silence_insertion": false,
+      "seconds": 1.6088152349998381
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-5-16k.wav",
+      "sha256": "f4c5c7ee7651a2417b71bf6634c717033d0333679e9cd51dad886045cee5dad6",
+      "expected": "Je développe avec Python et Rust sur Omarchy.",
+      "failure": null,
+      "hypothesis": "Je développe avec Python et reste sur Omarchi.",
+      "errors": 2,
+      "words": 8,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.6501321000000644,
+        "peak_rss_bytes": 112406528
+      },
+      "silence_insertion": false,
+      "seconds": 1.6510921519998192
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-6-16k.wav",
+      "sha256": "fb61cf92c1dd7c5d63671d6076e95f38e574a72adce75980d314847d88382d08",
+      "expected": "Hyprland, Git, Steam et Notion.",
+      "failure": null,
+      "hypothesis": "Ypreslan, J, Steam et Notion.",
+      "errors": 2,
+      "words": 5,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.654295995999746,
+        "peak_rss_bytes": 113201152
+      },
+      "silence_insertion": false,
+      "seconds": 1.6551885399999264
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 0,
+      "file": "fr-7-16k.wav",
+      "sha256": "05b97728ddf1c16073bcd09d925956284e78ae3cdaa807fe723066adc35a869c",
+      "expected": "",
+      "failure": null,
+      "hypothesis": "Sous-titrage Société Radio-Canada",
+      "errors": 5,
+      "words": 0,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.633378859000004,
+        "peak_rss_bytes": 113373184
+      },
+      "silence_insertion": true,
+      "seconds": 1.6342288739997457
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-1-16k.wav",
+      "sha256": "1839b7437a7ab993396253b2bad1c803003b7e9d68df7bd7ba4ee1a53320a6cf",
+      "expected": "aide",
+      "failure": null,
+      "hypothesis": "Aïc.",
+      "errors": 1,
+      "words": 1,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.632630025999788,
+        "peak_rss_bytes": 111968256
+      },
+      "silence_insertion": false,
+      "seconds": 1.6334015130000807
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-2-16k.wav",
+      "sha256": "3712cad167eb67ba1ecd108ce7b279ab9cc0661c676170900cf5aa2043ba8ee4",
+      "expected": "état système",
+      "failure": null,
+      "hypothesis": "Etat Système.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.6058597030000783,
+        "peak_rss_bytes": 112685056
+      },
+      "silence_insertion": false,
+      "seconds": 1.6066637920002904
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-3-16k.wav",
+      "sha256": "64401746408a55e1154cbb2a98caaa20e94a17ef10e21145a12ee7d21de75409",
+      "expected": "mes projets",
+      "failure": null,
+      "hypothesis": "Mes projets",
+      "errors": 0,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.5742462829998658,
+        "peak_rss_bytes": 112001024
+      },
+      "silence_insertion": false,
+      "seconds": 1.5749833660001968
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-4-16k.wav",
+      "sha256": "80d988542b07fae608fb86c9072d948d541ace42bd094034b87d10c4ae6c0424",
+      "expected": "Jarvis, aide",
+      "failure": null,
+      "hypothesis": "Jarvie aide.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.6064552029997685,
+        "peak_rss_bytes": 112730112
+      },
+      "silence_insertion": false,
+      "seconds": 1.6072125739997318
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-5-16k.wav",
+      "sha256": "f4c5c7ee7651a2417b71bf6634c717033d0333679e9cd51dad886045cee5dad6",
+      "expected": "Je développe avec Python et Rust sur Omarchy.",
+      "failure": null,
+      "hypothesis": "Je développe avec Python et reste sur Omarchi.",
+      "errors": 2,
+      "words": 8,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.6776714939996964,
+        "peak_rss_bytes": 112541696
+      },
+      "silence_insertion": false,
+      "seconds": 1.6784985869999218
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-6-16k.wav",
+      "sha256": "fb61cf92c1dd7c5d63671d6076e95f38e574a72adce75980d314847d88382d08",
+      "expected": "Hyprland, Git, Steam et Notion.",
+      "failure": null,
+      "hypothesis": "Ypreslan, J, Steam et Notion.",
+      "errors": 2,
+      "words": 5,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.7290804399999615,
+        "peak_rss_bytes": 112672768
+      },
+      "silence_insertion": false,
+      "seconds": 1.7299933929998588
+    },
+    {
+      "backend": "vulkan",
+      "repeat": 1,
+      "file": "fr-7-16k.wav",
+      "sha256": "05b97728ddf1c16073bcd09d925956284e78ae3cdaa807fe723066adc35a869c",
+      "expected": "",
+      "failure": null,
+      "hypothesis": "Sous-titrage Société Radio-Canada",
+      "errors": 5,
+      "words": 0,
+      "execution": {
+        "vulkan": true,
+        "seconds": 1.7436398059999192,
+        "peak_rss_bytes": 209817600
+      },
+      "silence_insertion": true,
+      "seconds": 1.744523185000162
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-1-16k.wav",
+      "sha256": "1839b7437a7ab993396253b2bad1c803003b7e9d68df7bd7ba4ee1a53320a6cf",
+      "expected": "aide",
+      "failure": null,
+      "hypothesis": "Aïc.",
+      "errors": 1,
+      "words": 1,
+      "execution": {
+        "vulkan": false,
+        "seconds": 11.942217588999938,
+        "peak_rss_bytes": 1898819584
+      },
+      "silence_insertion": false,
+      "seconds": 11.942720172999998
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-2-16k.wav",
+      "sha256": "3712cad167eb67ba1ecd108ce7b279ab9cc0661c676170900cf5aa2043ba8ee4",
+      "expected": "état système",
+      "failure": null,
+      "hypothesis": "Etat Système.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 11.918974486000025,
+        "peak_rss_bytes": 1898799104
+      },
+      "silence_insertion": false,
+      "seconds": 11.919722841000294
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-3-16k.wav",
+      "sha256": "64401746408a55e1154cbb2a98caaa20e94a17ef10e21145a12ee7d21de75409",
+      "expected": "mes projets",
+      "failure": null,
+      "hypothesis": "Mes projets",
+      "errors": 0,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 12.038395265999952,
+        "peak_rss_bytes": 1898860544
+      },
+      "silence_insertion": false,
+      "seconds": 12.03940757600003
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-4-16k.wav",
+      "sha256": "80d988542b07fae608fb86c9072d948d541ace42bd094034b87d10c4ae6c0424",
+      "expected": "Jarvis, aide",
+      "failure": null,
+      "hypothesis": "Jarvie aide.",
+      "errors": 1,
+      "words": 2,
+      "execution": {
+        "vulkan": false,
+        "seconds": 12.381110823999734,
+        "peak_rss_bytes": 1898901504
+      },
+      "silence_insertion": false,
+      "seconds": 12.381955158999972
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-5-16k.wav",
+      "sha256": "f4c5c7ee7651a2417b71bf6634c717033d0333679e9cd51dad886045cee5dad6",
+      "expected": "Je développe avec Python et Rust sur Omarchy.",
+      "failure": null,
+      "hypothesis": "Je développe avec Python et reste sur Omarchi.",
+      "errors": 2,
+      "words": 8,
+      "execution": {
+        "vulkan": false,
+        "seconds": 12.554404787999829,
+        "peak_rss_bytes": 1899405312
+      },
+      "silence_insertion": false,
+      "seconds": 12.554974597000182
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-6-16k.wav",
+      "sha256": "fb61cf92c1dd7c5d63671d6076e95f38e574a72adce75980d314847d88382d08",
+      "expected": "Hyprland, Git, Steam et Notion.",
+      "failure": null,
+      "hypothesis": "Ypreslan, J, Steam et Notion.",
+      "errors": 2,
+      "words": 5,
+      "execution": {
+        "vulkan": false,
+        "seconds": 12.397176725000008,
+        "peak_rss_bytes": 1899462656
+      },
+      "silence_insertion": false,
+      "seconds": 12.39782762699997
+    },
+    {
+      "backend": "cpu",
+      "repeat": 1,
+      "file": "fr-7-16k.wav",
+      "sha256": "05b97728ddf1c16073bcd09d925956284e78ae3cdaa807fe723066adc35a869c",
+      "expected": "",
+      "failure": null,
+      "hypothesis": "Sous-titrage Société Radio-Canada",
+      "errors": 5,
+      "words": 0,
+      "execution": {
+        "vulkan": false,
+        "seconds": 12.483066614999643,
+        "peak_rss_bytes": 1899098112
+      },
+      "silence_insertion": true,
+      "seconds": 12.48367146999999
+    }
+  ],
+  "summaries": [
+    {
+      "backend": "cpu",
+      "attempts": 14,
+      "failures": 0,
+      "wer": 0.6,
+      "mean_seconds": 19.798452626000003,
+      "peak_rss_bytes": 1899479040,
+      "silence_insertions": 2
+    },
+    {
+      "backend": "vulkan",
+      "attempts": 14,
+      "failures": 0,
+      "wer": 0.6,
+      "mean_seconds": 1.6532425509285855,
+      "peak_rss_bytes": 209817600,
+      "silence_insertions": 2
+    }
+  ]
+}
