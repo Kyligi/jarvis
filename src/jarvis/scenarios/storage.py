@@ -15,8 +15,8 @@ from datetime import datetime
 ROOT = settings.data_dir / 'scenarios'
 
 
-def read_json(path):
-    if path.stat().st_size > 2_000_000:
+def read_json(path, maximum=2_000_000):
+    if path.stat().st_size > maximum:
         raise ValueError('Fichier trop volumineux, conservé.')
     def unique(pairs):
         result = {}
@@ -126,7 +126,7 @@ class Store:
         path = self.root / 'journal' / 'runs.json'
         if not path.exists():
             return []
-        value = read_json(path)
+        value = read_json(path, maximum=8_000_000)
         if not isinstance(value, dict) or value.get('schema_version') != 1 or not isinstance(value.get('runs'), list):
             raise ValueError('Historique invalide ; fichier conservé.')
         if len(value['runs']) > 100 or set(value) != {'schema_version', 'runs'} or type(value['schema_version']) is not int:

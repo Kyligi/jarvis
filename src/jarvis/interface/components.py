@@ -55,11 +55,15 @@ class CommandConsole(QWidget):
         self.button.setObjectName("primary")
         self.button.clicked.connect(self.submit)
         row.addWidget(self.button)
+        self.cancel_scenario = QPushButton("Annuler scénario")
+        self.cancel_scenario.clicked.connect(lambda: bus.submit("annule scénario"))
+        row.addWidget(self.cancel_scenario)
         layout.addLayout(row)
         self.status = label("Prêt  ·  commandes locales autorisées", "muted")
         layout.addWidget(self.status)
         bus.result.connect(self.show_result)
         bus.busy_changed.connect(self.set_busy)
+        bus.scenario_progress.connect(self.scenario_changed)
         self.set_busy(bus.busy)
 
     @Slot()
@@ -69,13 +73,26 @@ class CommandConsole(QWidget):
 
     @Slot(object)
     def show_result(self, result):
-        text = str(result)
+        if isinstance(result, dict) and 'scenario_saved' in result:
+            text = 'Scénario enregistré.'
+        elif isinstance(result, dict) and 'scenario_error' in result:
+            text = result['scenario_error']
+        elif isinstance(result, dict) and ('mode_saved' in result or 'mode_error' in result):
+            text = result['message']
+        else:
+            text = str(result)
         if not self.has_response:
             self.output.setPlainText(text)
             self.has_response = True
         else:
             self.output.appendPlainText(f"\n── {datetime.now():%H:%M:%S} ──\n{text}")
         self.output.verticalScrollBar().setValue(self.output.verticalScrollBar().maximum())
+
+    @Slot(object)
+    def scenario_changed(self, value):
+        if value['state'] == 'running':
+            self.command.setEnabled(True)
+            self.status.setText("Scénario en cours · annule scénario / état scénario restent disponibles")
 
     @Slot(bool)
     def set_busy(self, busy):

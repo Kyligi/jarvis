@@ -40,5 +40,8 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
 QCheckBox {{ spacing: 10px; background: transparent; }}
 QCheckBox::indicator {{ width: 16px; height: 16px; border: 1px solid {MUTED}; border-radius: 4px; background: {BACKGROUND}; }}
 QCheckBox::indicator:checked {{ background: {CYAN}; border: 1px solid {CYAN}; }}
+QTabWidget::pane {{ border: none; }}
+QTabBar::tab {{ background: {SURFACE}; border: 1px solid {BORDER}; padding: 10px 20px; color: {MUTED}; }}
+QTabBar::tab:selected {{ color: {CYAN}; border-bottom: 2px solid {CYAN}; }}
 QToolTip {{ background: {SURFACE}; color: {TEXT}; border: 1px solid {CYAN}; }}
 """

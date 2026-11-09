@@ -48,6 +48,8 @@ class CommandBus(QObject):
     busy_changed = Signal(bool)
     completed = Signal()
     started = Signal(str)
+    page_requested = Signal(str)
+    scenario_progress = Signal(object)
 
     def __init__(self, parent=None, executor=None):
         super().__init__(parent)
@@ -61,17 +63,26 @@ class CommandBus(QObject):
 
     def submit(self, command: str) -> bool:
         text = command.strip()
-        if not text or self.busy:
+        if not text:
+            return False
+        resolved = resolve(text)
+        if resolved and resolved.command.id in {"scenarios.cancel", "scenarios.status"}:
+            self.result.emit(resolved.run())
+            return True
+        if self.busy:
             return False
         if not self.runner.start(lambda: self.executor(text)):
             return False
-        resolved = resolve(text)
         identifier = resolved.command.id if resolved else "unknown"
         if identifier in {"modes.travail", "modes.gaming", "modes.etudes"}:
             self.last_requested_mode = identifier.split(".")[1]
         self.busy = True
         self.busy_changed.emit(True)
         self.started.emit(identifier)
+        if identifier == "scenarios.open":
+            self.page_requested.emit("scenarios")
+        elif identifier == "modes.configure" and resolved.arguments[0] in {"travail", "gaming", "etudes"}:
+            self.page_requested.emit("modes:" + resolved.arguments[0])
         return True
 
     def submit_operation(self, operation) -> bool:
@@ -111,6 +122,10 @@ class AppContext(QObject):
             logging.getLogger(__name__).warning("preferences_load_failed", extra={"error_type": type(error).__name__})
         self.monitor = MonitorHub(self, collector, self.preferences.refresh_seconds)
         self.commands = CommandBus(self, executor)
+        from jarvis.scenarios.engine import engine
+        self.scenario_engine = engine
+        self.scenario_listener = self.commands.scenario_progress.emit
+        engine.listeners.append(self.scenario_listener)
         self.preference_runner = Runner(self)
         self.preference_runner.result.connect(self.apply_preferences)
         self.preference_runner.failed.connect(self.preferences_failed)
@@ -142,8 +157,11 @@ class AppContext(QObject):
         if self.stopped:
             return
         self.stopped = True
+        self.scenario_engine.cancel()
         self.monitor.shutdown()
         self.commands.runner.shutdown()
         self.preference_runner.shutdown()
+        if self.scenario_listener in self.scenario_engine.listeners:
+            self.scenario_engine.listeners.remove(self.scenario_listener)
         for runner in self.readers:
             runner.shutdown()

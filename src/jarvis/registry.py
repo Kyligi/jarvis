@@ -11,6 +11,7 @@ from jarvis.modes import manager as modes
 from jarvis.modules import projects as legacy_projects
 from jarvis import omarchy
 from jarvis.services import window_commands as windows
+from jarvis.scenarios import commands as scenarios
 
 Handler = Callable[..., str]
 
@@ -73,9 +74,10 @@ def rust_open(name: str) -> str:
 
 
 def modes_list() -> str:
+    from jarvis.modes.profiles import load
     return "J.A.R.V.I.S. — MODES DISPONIBLES\n\n" + "\n".join(
         f"• {name.capitalize()} (workspace {profile['workspace']})"
-        for name, profile in modes.MODES.items()
+        for name, profile in load().items()
     )
 
 
@@ -158,6 +160,16 @@ COMMANDS = (
     *(exact(f"windows.layout.{name}", f"disposition {label}", "Prévisualiser ; confirmation obligatoire avant déplacement", (f"disposition {label}",), lambda name=name: windows.preview(name), "Fenêtres") for name, label in (("developpement", "développement"), ("etudes", "études"), ("gaming", "gaming"))),
     Command("windows.confirm", "confirme disposition CODE", "Appliquer le plan prévisualisé pendant 60 secondes", ("confirme disposition 1234abcd",), windows.confirm, "Fenêtres", pattern=r"confirme disposition ([0-9a-f]{8})"),
     exact("windows.cancel", "annule disposition", "Annuler la disposition en attente", ("annule disposition",), windows.cancel, "Fenêtres"),
+    exact("scenarios.list", "mes scénarios", "Bibliothèque et fichiers invalides", ("mes scénarios", "liste mes scénarios", "scénarios"), scenarios.library, "Scénarios"),
+    Command("scenarios.run", "lance scénario NOM", "Exécuter les étapes ; confirmation avant déplacement", ("lance scénario Révisions",), scenarios.launch, "Scénarios", pattern=r"(?:lance|lancer|execute) (?:le )?scenario (.+)"),
+    Command("scenarios.preview", "prévisualise scénario NOM", "Simulation sans mutation du bureau ni des projets", ("prévisualise scénario Révisions",), scenarios.preview, "Scénarios", pattern=r"(?:previsualise|simule) (?:le )?scenario (.+)"),
+    exact("scenarios.cancel", "annule scénario", "Annuler les étapes non commencées, sans fermer d’application", ("annule scénario", "annule le scénario"), scenarios.cancel, "Scénarios"),
+    exact("scenarios.status", "état scénario", "Résultat et progression de la dernière exécution", ("état scénario", "état du scénario"), scenarios.status, "Scénarios"),
+    exact("scenarios.history", "historique scénarios", "Les 100 dernières exécutions", ("historique scénarios", "historique des scénarios"), scenarios.history, "Scénarios"),
+    Command("scenarios.confirm", "confirme scénario CODE", "Confirmer les déplacements annoncés pendant 60 secondes", ("confirme scénario 1234abcd",), scenarios.confirm, "Scénarios", pattern=r"confirme scenario ([0-9a-f]{8})"),
+    exact("scenarios.open", "ouvre scénarios", "Ouvrir l’éditeur dans le HUD", ("ouvre scénarios", "ouvre les scénarios"), scenarios.open_page, "Scénarios"),
+    Command("modes.configure", "configure mode NOM", "Ouvrir les paramètres du mode dans le HUD", ("configure mode Études",), scenarios.configure, "Modes", pattern=r"configure (?:le )?mode (.+)"),
+
 )
 
 

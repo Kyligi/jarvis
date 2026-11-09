@@ -13,6 +13,7 @@ class JarvisWindow(QWidget):
         super().__init__()
         self.context = context or AppContext(executor=lambda text: execute(text))
         self.hud = None
+        self.context.commands.page_requested.connect(self.open_page)
         self.setWindowTitle("J.A.R.V.I.S. — Omarchy")
         self.setWindowFlag(Qt.WindowType.Window, True)
         self.setStyleSheet(theme.STYLE)
@@ -54,6 +55,14 @@ class JarvisWindow(QWidget):
         self.hud.show()
         self.hud.raise_()
         self.hud.activateWindow()
+
+    @Slot(str)
+    def open_page(self, name):
+        self.open_hud()
+        self.hud.navigation.setCurrentRow(7 if name == 'scenarios' else 4)
+        if name.startswith('modes:'):
+            page = self.hud.pages[4]
+            page.tabs.setCurrentIndex(page.mode_names.index(name.split(':', 1)[1]))
 
     def showEvent(self, event):
         self.dashboard.set_active(True)
