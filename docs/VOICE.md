@@ -2,6 +2,8 @@
 
 ## État livré et limites
 
+V1.4.1 : voir [paramètres, benchmark et recette](VOICE_V1_4_1.md).
+
 Le code fournit capture PipeWire, transcription whisper.cpp CPU et synthèse Piper
 OHF via leurs exécutables locaux. Aucun moteur ni modèle n'est installé ou téléchargé
 par Jarvis. Sur la machine auditée le 9 novembre 2026, les exécutables Whisper/Piper
@@ -167,10 +169,11 @@ Hyprland 0.56.2, Vulkan Radeon 860M / RADV KRACKAN1 / Mesa 26.2.5.
 `vulkaninfo --summary` réussit. Ni ROCm ni le NPU ne sont utilisés.
 Vulkan disponible ne prouve pas Whisper accéléré. Pour une étude séparée, compiler
 une variante avec `-DGGML_VULKAN=1` et comparer aux mêmes fichiers CPU ; Jarvis
-continue à forcer `-ng` tant que cette comparaison n'est pas validée.
+force `-ng` par défaut. V1.4.1 permet un binaire GPU distinct après validation explicite.
 
-Aucune mesure d'initialisation, latence, RAM/CPU STT/TTS ou comparaison base/small
-n'est disponible faute de moteurs/modèles. Au repos le contrôleur ne crée aucun
+Les mesures synthétiques V1.4.1 et leurs limites figurent dans
+[le rapport V1.4.1](VOICE_V1_4_1.md). Aucune mesure de précision sur voix humaine
+ni de consommation RAM/CPU n'est disponible. Au repos le contrôleur ne crée aucun
 thread audio ni sous-processus ; un timer Qt vérifie l'expiration toutes les 250 ms.
 Cette propriété du code n'est pas une mesure de consommation matérielle.
 

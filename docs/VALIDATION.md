@@ -315,3 +315,16 @@ Validation finale V1.4 : `uv sync --locked` réussi (version 1.4.0, dépendances
 inchangées), `uv run pytest -q` : **384 réussis en 6,05 s** ;
 `uv run python -m compileall -q src/jarvis` et `git diff --check` réussis.
 Aucun outil de lint supplémentaire configuré ou prétendu exécuté.
+
+## V1.4.1 — reconnaissance vocale
+
+Les 384 tests V1.4 restent présents. Les nouveaux tests couvrent pré-enregistrement,
+fragmentation PCM, hystérésis, silence/bruit, mots courts, limites 5/12/30 s,
+VAD absent/défaillant, annulation, libération du processus micro, contexte opt-in,
+choix GPU distinct, transcriptions invalides, registre/aide et calcul du WER.
+Mesures réelles CPU sur corpus synthétique, limites et procédure manuelle :
+[rapport V1.4.1](VOICE_V1_4_1.md). La qualité sur voix humaine, le VAD réel et
+les performances Whisper Vulkan restent à valider. Aucun modèle téléchargé.
+
+Résultat automatisé V1.4.1 : **421 tests réussis** (384 conservés + 37 nouveaux),
+`git diff --check` sans erreur. Aucun test ne lance le microphone réel.

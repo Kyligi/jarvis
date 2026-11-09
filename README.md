@@ -1,4 +1,4 @@
-# J.A.R.V.I.S. V1.4 — Assistant vocal local
+# J.A.R.V.I.S. V1.4.1 — Assistant vocal local
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
@@ -10,6 +10,9 @@ whisper.cpp CPU et Piper OHF. Microphone fermé au démarrage, validation visibl
 avant commande, interruption et paramètres TOML privés. Les moteurs/modèles sont
 à installer volontairement ; la validation matérielle STT/TTS reste à effectuer.
 Le wake word n'est pas activable faute de validation. Voir [Voix](docs/VOICE.md).
+La V1.4.1 ajoute un pré-enregistrement de 300 ms, une détection de silence
+avec hystérésis, Silero facultatif et un benchmark reproductible base/small.
+Voir [audit, mesures et validation V1.4.1](docs/VOICE_V1_4_1.md).
 Le registre conserve les 59 commandes historiques et ajoute 10 commandes vocales.
 Aucun push ni changement système n’est requis.
 Voir le [guide des scénarios](docs/SCENARIOS.md), son

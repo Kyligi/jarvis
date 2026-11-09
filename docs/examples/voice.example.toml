@@ -15,7 +15,15 @@ tts_volume = 0.7
 wake_word_enabled = false
 wake_word_model = ""
 wake_word_threshold = 0.7
-max_recording_seconds = 15.0
+max_recording_seconds = 12.0
+pre_recording_ms = 300.0
+adaptive_noise = true
+vad_enabled = false
+vad_model = ""
+# Facultatif : Jarvis, Omarchy, Hyprland, Rust, Python, Git, Steam, Notion.
+whisper_prompt = ""
+compute_backend = "cpu"
+gpu_executable = ""
 silence_seconds = 1.5
 silence_threshold = 0.015
 timeout_seconds = 60.0
