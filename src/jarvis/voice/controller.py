@@ -1,6 +1,7 @@
 """Single-session controller. Callbacks carry snapshots; no UI or command execution."""
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
 import threading
 import time
 from jarvis.voice.backends import Cancelled, VoiceError, PipeWireCapture, WhisperCLI, PiperCLI
@@ -24,6 +25,7 @@ class Snapshot:
     message: str = ''
     level: float = 0
     seconds: float = 0
+    engine: str = ''
 
 
 class VoiceController:
@@ -35,18 +37,19 @@ class VoiceController:
         self.tts = tts or PiperCLI()
         self.listener = listener
         self.clock = clock
-        self.snapshot = Snapshot(State.IDLE)
         self.lock = threading.RLock()
         self.cancelled = threading.Event()
         self.stop = threading.Event()
         self.thread = None
         self.closed = False
+        self.engine = 'Accélération non vérifiée : aucune transcription effectuée.'
+        self.snapshot = Snapshot(State.IDLE, engine=self.engine)
         self.pending = None
         self.last_response = ''
         self.suppress_speech = False
 
     def emit(self, state, **kwargs):
-        self.snapshot = Snapshot(state, **kwargs)
+        self.snapshot = Snapshot(state, engine=self.engine, **kwargs)
         self.listener(self.snapshot)
 
     def available(self):
@@ -57,6 +60,8 @@ class VoiceController:
             if not self.available() or self.snapshot.state not in (State.IDLE, State.ERROR):
                 raise VoiceError('Arrêter la session vocale avant de changer les paramètres.')
             self.config = config
+            self.engine = 'Accélération non vérifiée : configuration modifiée.'
+            self.emit(State.IDLE)
 
     def launch(self, function):
         self.cancelled = threading.Event()
@@ -66,10 +71,16 @@ class VoiceController:
                 function()
             except Cancelled:
                 with self.lock:
+                    if self.snapshot.state == State.TRANSCRIBING:
+                        self.engine = 'Transcription annulée : aucun résultat validé.'
                     self.emit(State.IDLE)
             except Exception as error:
                 with self.lock:
                     message = str(error) if isinstance(error, VoiceError) else 'Erreur audio : vérifier les paramètres locaux.'
+                    if self.snapshot.state == State.TRANSCRIBING:
+                        if self.config.compute_backend == 'vulkan':
+                            message += ' Repli : choisir CPU dans Voix, enregistrer et refaire une capture.'
+                        self.engine = 'Transcription échouée : accélération non validée.'
                     self.emit(State.ERROR, message=message)
         self.thread = threading.Thread(target=work, name='jarvis-voice', daemon=False)
         self.thread.start()
@@ -103,6 +114,7 @@ class VoiceController:
             if not pcm:
                 self.emit(State.IDLE, message='Aucune parole détectée.')
                 return
+            self.engine = f'{self.config.compute_backend} demandé · chargement et transcription en cours'
             self.emit(State.TRANSCRIBING)
         result = self.stt.transcribe(pcm, self.config, self.cancelled)
         del pcm
@@ -111,6 +123,10 @@ class VoiceController:
                 raise Cancelled()
             if not isinstance(result.text, str) or any(ord(c) < 32 for c in result.text):
                 raise VoiceError('Transcription invalide : reformuler une seule commande.')
+            self.engine = f'Dernière transcription : {result.backend.upper()} · {Path(self.config.stt_model).name}'
+            if result.execution:
+                self.engine += (f' · {result.execution.seconds:.2f} s chargement inclus'
+                                f' · RSS pic échantillonné {result.execution.peak_rss_bytes / 1048576:.0f} Mio')
             text = result.text.strip()
             if not text:
                 self.emit(State.IDLE, message='Transcription vide : aucune commande.')

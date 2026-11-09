@@ -1,9 +1,11 @@
 """Bounded local CLI adapters; subprocesses owned and reaped in finally blocks."""
 from array import array
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import math
 import os
+import re
+import psutil
 from pathlib import Path
 import selectors
 import shutil
@@ -46,8 +48,67 @@ def reap(process):
     process.wait()
 
 
-def run(argv, cancel, timeout, data=None):
+@dataclass(frozen=True)
+class Execution:
+    vulkan: bool = False
+    seconds: float = 0
+    peak_rss_bytes: int = 0
+
+
+def run_observed(argv, cancel, timeout):
+    """Drain stderr without retaining transcripts; retain only backend evidence.
+
+    RSS is sampled every <=50 ms and excludes separately allocated GPU memory.
+    No diagnostic text leaves this function, including on failure.
+    """
+    if cancel.is_set():
+        raise Cancelled()
+    if timeout <= 0:
+        raise VoiceError('Délai du moteur audio dépassé.')
+    started = time.monotonic()
+    process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.PIPE, bufsize=0)
+    pending = b''
+    selected = allocated = failed = False
+    peak = 0
+    try:
+        with selectors.DefaultSelector() as selector:
+            selector.register(process.stderr, selectors.EVENT_READ)
+            while selector.get_map() or process.poll() is None:
+                if cancel.is_set():
+                    raise Cancelled()
+                if time.monotonic() - started >= timeout:
+                    raise VoiceError('Délai du moteur audio dépassé.')
+                try:
+                    peak = max(peak, psutil.Process(process.pid).memory_info().rss)
+                except psutil.Error:
+                    pass
+                for key, _ in selector.select(.05):
+                    chunk = os.read(key.fd, 4096)
+                    if not chunk:
+                        selector.unregister(key.fileobj)
+                        continue
+                    pending += chunk
+                    lines = pending.split(b'\n')
+                    pending = lines.pop()[-4096:]
+                    for line in lines:
+                        selected |= bool(re.search(rb'^whisper_backend_init_gpu: using Vulkan[0-9]+ backend\r?$', line))
+                        allocated |= bool(re.search(rb'^whisper_model_load: +Vulkan[0-9]+ total size = +[1-9][0-9.]* MB', line))
+                        failed |= b'failed to initialize' in line or b'no GPU found' in line
+                if not selector.get_map() and process.poll() is None:
+                    cancel.wait(.01)
+        if process.wait():
+            raise VoiceError('Échec audio : vérifier modèle, périphérique et permissions.')
+        return Execution(selected and allocated and not failed, time.monotonic()-started, peak)
+    finally:
+        reap(process)
+        process.stderr.close()
+
+
+def run(argv, cancel, timeout, data=None, observe=False):
     """No shell, no transcript in argv/stderr/logs; cancel checked every 50 ms."""
+    if observe:
+        return run_observed(argv, cancel, timeout)
     if cancel.is_set():
         raise Cancelled()
     process = subprocess.Popen(argv, stdin=subprocess.PIPE if data is not None else subprocess.DEVNULL,
@@ -205,10 +266,13 @@ class Transcript:
     confidence: float | None = None
     vad_used: bool = False
     warning: str = ''
+    execution: Execution | None = field(default=None, compare=False)
+    backend: str = field(default='cpu', compare=False)
 
 
 class WhisperCLI:
     def transcribe(self, pcm, config, cancel):
+        deadline = time.monotonic() + config.timeout_seconds
         model = model_file(config.stt_model)
         binary = executable(config.stt_executable if config.compute_backend == 'cpu' else config.gpu_executable)
         with tempfile.TemporaryDirectory(prefix='jarvis-stt-') as directory:
@@ -233,10 +297,10 @@ class WhisperCLI:
                     warning = 'VAD absent : transcription sans VAD.'
                 else:
                     try:
-                        run(argv + ['--vad', '--vad-model', str(vad),
+                        execution = run(argv + ['--vad', '--vad-model', str(vad),
                                     '--vad-speech-pad-ms', '300',
                                     '--vad-min-speech-duration-ms', '100'],
-                            cancel, config.timeout_seconds)
+                            cancel, max(0, deadline-time.monotonic()), None, True)
                         vad_used = True
                     except Cancelled:
                         raise
@@ -244,7 +308,9 @@ class WhisperCLI:
                         warning = 'Échec VAD : transcription sans VAD.'
                         output.with_suffix('.json').unlink(missing_ok=True)
             if not vad_used:
-                run(argv, cancel, config.timeout_seconds)
+                execution = run(argv, cancel, max(0, deadline-time.monotonic()), None, True)
+            if config.compute_backend == 'vulkan' and (not execution or not execution.vulkan):
+                raise VoiceError('Vulkan non confirmé : transcription rejetée. Choisir CPU dans Voix, enregistrer puis refaire une capture.')
             try:
                 data = json.loads(output.with_suffix('.json').read_text())
                 segments = data['transcription']
@@ -256,7 +322,7 @@ class WhisperCLI:
                 scores = [t['p'] for s in segments for t in s.get('tokens', [])
                           if not t.get('text', '').startswith('[_') and type(t.get('p')) in (float, int) and math.isfinite(t['p']) and 0 <= t['p'] <= 1]
                 confidence = sum(scores)/len(scores) if scores else None
-                return Transcript(text, confidence, vad_used, warning)
+                return Transcript(text, confidence, vad_used, warning, execution, config.compute_backend)
             except (OSError, KeyError, TypeError, ValueError, AttributeError) as error:
                 raise VoiceError('Réponse Whisper illisible ou incompatible.') from error
 

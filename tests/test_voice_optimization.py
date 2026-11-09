@@ -88,6 +88,7 @@ def whisper(tmp_path, monkeypatch):
     def run(argv, *args):
         calls.append(argv)
         Path(argv[argv.index('-of')+1]+'.json').write_text(json.dumps({'transcription':[{'text':'aide'}]}))
+        return b.Execution(vulkan='-ng' not in argv)
     monkeypatch.setattr(b, 'run', run)
     return replace(VoiceConfig(), stt_model=str(model)), calls
 

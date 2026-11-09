@@ -53,3 +53,6 @@ Thumbs.db
 ggml-*.bin
 *.wav
 voice-corpus/
+
+# Machine-local Whisper Vulkan build and models
+.local/

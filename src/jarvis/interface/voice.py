@@ -3,7 +3,7 @@ from dataclasses import replace
 from PySide6.QtCore import QObject, Signal, Slot, QTimer
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QLineEdit, QCheckBox, QFormLayout, QDoubleSpinBox,
-                              QComboBox, QProgressBar)
+                              QComboBox, QProgressBar, QFileDialog)
 from jarvis.interface.components import label
 from jarvis.interface.workers import Runner
 from jarvis.voice import config, commands
@@ -141,6 +141,9 @@ class VoiceControls(QWidget):
         layout.addLayout(row)
         self.status = label('idle · microphone fermé', 'muted')
         self.status.setWordWrap(True)
+        self.engine = label('', 'muted')
+        self.engine.setWordWrap(True)
+        layout.addWidget(self.engine)
         self.transcript = label('', 'muted')
         self.transcript.setWordWrap(True)
         layout.addWidget(self.status)
@@ -156,6 +159,7 @@ class VoiceControls(QWidget):
     @Slot(object)
     def update_state(self, value):
         self.status.setText(f'{value.state} · {value.seconds:.1f} s · {value.message}')
+        self.engine.setText(value.engine)
         self.transcript.setText(value.text)
         self.transcript.setVisible(bool(value.text))
         self.meter.setVisible(value.state == State.LISTENING)
@@ -185,14 +189,23 @@ class VoicePage(QWidget):
         self.spoken = QCheckBox('Lire les résultats à voix haute')
         self.spoken.setChecked(value.spoken_responses)
         form.addRow(self.spoken)
+        self.backend = QComboBox()
+        self.backend.addItem('CPU — moteur précédent', 'cpu')
+        self.backend.addItem('Vulkan — vérification effective obligatoire', 'vulkan')
+        self.backend.setCurrentIndex(self.backend.findData(value.compute_backend))
+        form.addRow('Calcul Whisper', self.backend)
+        form.addRow(label('En cas d’échec Vulkan : choisir CPU, enregistrer et refaire une capture.', 'muted'))
         self.fields = {}
-        for key, title in [('stt_executable', 'Exécutable whisper-cli'), ('stt_model', 'Modèle multilingue .bin'),
+        for key, title in [('stt_executable', 'Exécutable whisper-cli CPU'), ('gpu_executable', 'Exécutable whisper-cli Vulkan distinct'), ('stt_model', 'Modèle multilingue .bin'),
                            ('vad_model', 'Modèle Silero local (facultatif)'),
                            ('whisper_prompt', 'Contexte Whisper (vide par défaut)'),
                            ('tts_executable', 'Exécutable Piper OHF'), ('tts_voice', 'Voix française .onnx')]:
             widget = QLineEdit(getattr(value, key))
             self.fields[key] = widget
             form.addRow(title, widget)
+        choose_model = QPushButton('Choisir un modèle multilingue local…')
+        choose_model.clicked.connect(self.choose_model)
+        form.addRow(choose_model)
         self.microphone = QComboBox()
         self.output = QComboBox()
         for widget, key in [(self.microphone, 'microphone_device'), (self.output, 'output_device')]:
@@ -207,7 +220,8 @@ class VoicePage(QWidget):
                                      ('max_recording_seconds', 'Durée maximale (s)', 5, 30),
                                      ('pre_recording_ms', 'Pré-enregistrement (ms)', 0, 1000),
                                      ('silence_seconds', 'Arrêt après silence (s)', .3, 10),
-                                     ('silence_threshold', 'Seuil RMS de parole', .001, .5)]:
+                                     ('silence_threshold', 'Seuil RMS de parole', .001, .5),
+                                     ('timeout_seconds', 'Délai maximal moteur (s)', 1, 300)]:
             spin = QDoubleSpinBox()
             spin.setDecimals(3)
             spin.setRange(low, high)
@@ -238,6 +252,12 @@ class VoicePage(QWidget):
         self.reader.result.connect(self.receive_devices)
         self.reader.failed.connect(lambda _: self.notice.setText('PipeWire indisponible : vérifier la session audio.'))
 
+    def choose_model(self):
+        path, _ = QFileDialog.getOpenFileName(self, 'Modèle Whisper multilingue',
+                                             self.fields['stt_model'].text(), 'Whisper (*.bin)')
+        if path:
+            self.fields['stt_model'].setText(path)
+
     def set_active(self, active):
         self.active = active
 
@@ -263,7 +283,7 @@ class VoicePage(QWidget):
     def save(self):
         try:
             value = replace(self.bridge.controller.config, enabled=self.enabled.isChecked(),
-                            spoken_responses=self.spoken.isChecked(),
+                            spoken_responses=self.spoken.isChecked(), compute_backend=self.backend.currentData(),
                             vad_enabled=self.vad.isChecked(), adaptive_noise=self.noise.isChecked(),
                             microphone_device=self.microphone.currentData(), output_device=self.output.currentData(),
                             **{k: w.text() for k, w in self.fields.items()},
