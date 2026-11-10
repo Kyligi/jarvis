@@ -1,11 +1,12 @@
 """Mini conserve son identité jarvis et possède le contexte de l'application."""
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+
 from jarvis.core.commands import execute
+from jarvis.interface import theme
+from jarvis.interface.components import CommandConsole, label
 from jarvis.interface.context import AppContext
 from jarvis.interface.dashboard import MonitorDashboard
-from jarvis.interface.components import CommandConsole, label
-from jarvis.interface import theme
 
 
 class JarvisWindow(QWidget):

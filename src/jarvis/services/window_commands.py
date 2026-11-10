@@ -1,9 +1,10 @@
 """Présentation textuelle et plans collectifs confirmés, partagés avec le HUD."""
-from dataclasses import dataclass
-from functools import wraps
 import secrets
 import time
-from jarvis.services.windows import service, Window, WindowError, application_class
+from dataclasses import dataclass
+from functools import wraps
+
+from jarvis.services.windows import Window, WindowError, application_class, service
 
 
 def readable(function):

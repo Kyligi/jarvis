@@ -1,8 +1,9 @@
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QPushButton
-from jarvis.interface.pages.base import DataPage
+
 from jarvis.interface.components import Card, label, text_view
 from jarvis.interface.dashboard import Metric
+from jarvis.interface.pages.base import DataPage
 
 
 class HomePage(DataPage):

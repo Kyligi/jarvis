@@ -1,8 +1,8 @@
 """Configuration locale TOML, chargée une fois au démarrage (aucune écriture)."""
-from dataclasses import dataclass, field
 import os
-from pathlib import Path
 import tomllib
+from dataclasses import dataclass, field
+from pathlib import Path
 
 
 @dataclass(frozen=True)

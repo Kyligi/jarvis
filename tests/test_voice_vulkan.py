@@ -1,18 +1,18 @@
 """V1.4.2: real subprocess diagnostics and fail-closed Vulkan selection."""
-from dataclasses import replace
 import json
-from pathlib import Path
-import sys
 import subprocess
+import sys
 import threading
 import time
+from dataclasses import replace
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
 from jarvis.voice import backends as b
-from jarvis.voice.config import VoiceConfig, save, load
-from jarvis.voice.controller import VoiceController, State
+from jarvis.voice.config import VoiceConfig, load, save
+from jarvis.voice.controller import State, VoiceController
 
 REAL_POPEN = subprocess.Popen
 
@@ -160,9 +160,10 @@ def test_loading_and_transcription_stay_off_caller_thread():
 
 
 def test_hud_backend_model_and_telemetry(qapp):
-    from jarvis.interface.context import AppContext
-    from jarvis.interface.voice import VoicePage, VoiceControls
     from test_interface import pump
+
+    from jarvis.interface.context import AppContext
+    from jarvis.interface.voice import VoiceControls, VoicePage
     context = AppContext(executor=Mock())
     try:
         page = VoicePage(context)

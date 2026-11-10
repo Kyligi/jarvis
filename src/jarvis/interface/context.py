@@ -1,14 +1,16 @@
 """Services de présentation partagés par Mini et HUD dans un seul processus."""
+import logging
 from collections import deque
 from dataclasses import dataclass
-import logging
+
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from PySide6.QtWidgets import QApplication
+
 from jarvis import preferences
 from jarvis.core.commands import execute
-from jarvis.registry import resolve
 from jarvis.interface.workers import Runner
 from jarvis.monitoring.collector import Collector
+from jarvis.registry import resolve
 from jarvis.services.overview import OverviewService
 
 

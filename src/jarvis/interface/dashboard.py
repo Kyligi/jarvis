@@ -8,10 +8,10 @@ Réutilise MonitorHub et les données du collecteur existant.
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
     QApplication,
-    QWidget,
-    QVBoxLayout,
     QGridLayout,
     QLabel,
+    QVBoxLayout,
+    QWidget,
 )
 
 from jarvis.interface.context import MonitorHub

@@ -1,7 +1,9 @@
 """Opt-in only: never downloads a model or executes a desktop action."""
 import os
 import threading
+
 import pytest
+
 from jarvis.ai.backend import OllamaBackend, decode
 from jarvis.ai.config import AIConfig
 from jarvis.ai.conversation import Conversation

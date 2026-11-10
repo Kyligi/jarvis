@@ -1,15 +1,16 @@
-from dataclasses import replace
 import importlib.util
 import json
-from pathlib import Path
 import threading
-from unittest.mock import Mock
 import wave
+from dataclasses import replace
+from pathlib import Path
+from unittest.mock import Mock
 
 import pytest
-from jarvis.voice.config import VoiceConfig
-from jarvis.voice import backends as b
 from test_voice import controller, listen
+
+from jarvis.voice import backends as b
+from jarvis.voice.config import VoiceConfig
 from jarvis.voice.controller import State
 
 
@@ -226,7 +227,7 @@ def test_malformed_whisper_json_rejected(whisper, monkeypatch, payload):
 
 
 def test_new_preferences_roundtrip(tmp_path):
-    from jarvis.voice.config import save, load
+    from jarvis.voice.config import load, save
     config = VoiceConfig(pre_recording_ms=500, vad_enabled=True, vad_model='/local/vad.bin',
                          whisper_prompt='Omarchy, Hyprland.', compute_backend='vulkan',
                          gpu_executable='/local/vulkan', adaptive_noise=False)

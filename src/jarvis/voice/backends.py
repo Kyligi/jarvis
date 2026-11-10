@@ -1,12 +1,8 @@
 """Bounded local CLI adapters; subprocesses owned and reaped in finally blocks."""
-from array import array
-from dataclasses import dataclass, field
 import json
 import math
 import os
 import re
-import psutil
-from pathlib import Path
 import selectors
 import shutil
 import subprocess
@@ -14,6 +10,11 @@ import sys
 import tempfile
 import time
 import wave
+from array import array
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import psutil
 
 
 class VoiceError(RuntimeError):

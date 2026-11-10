@@ -1,9 +1,18 @@
 from datetime import datetime
-from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import (QLineEdit, QTableWidget, QTableWidgetItem, QAbstractItemView,
-                              QHeaderView, QHBoxLayout, QPushButton)
+
+from PySide6.QtCore import Slot
+from PySide6.QtWidgets import (
+    QAbstractItemView,
+    QHBoxLayout,
+    QHeaderView,
+    QLineEdit,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+)
+
+from jarvis.interface.components import label, text_view
 from jarvis.interface.pages.base import DataPage
-from jarvis.interface.components import text_view, label
 
 
 class ProjectsPage(DataPage):

@@ -1,5 +1,7 @@
 from unittest.mock import Mock
+
 import pytest
+
 from jarvis import preferences
 from jarvis.preferences import Preferences
 

@@ -1,12 +1,14 @@
 """Adaptateurs des services existants. Préconditions strictement en lecture seule."""
-from pathlib import Path
-from contextlib import closing
 import shutil
 import sqlite3
+from contextlib import closing
+from pathlib import Path
+
 from jarvis.config import settings
-from jarvis.services.windows import service, existing_application, WindowError
-from jarvis.services import window_commands
 from jarvis.projects import manager, sessions
+from jarvis.services import window_commands
+from jarvis.services.windows import existing_application, service
+
 from .model import validate_action
 
 

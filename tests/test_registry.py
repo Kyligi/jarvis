@@ -1,7 +1,9 @@
+import sqlite3
 from dataclasses import replace
 from unittest.mock import Mock
-import sqlite3
+
 import pytest
+
 from jarvis import registry
 from jarvis.core.commands import execute
 
@@ -81,9 +83,9 @@ def test_history_records_only_identifier(project):
 
 def test_compatibility_entrypoints(monkeypatch):
     from jarvis.commands import handle_system_command
+    from jarvis.modes.commands import handle_mode_command
     from jarvis.projects.commands import handle_session_command
     from jarvis.projects.manager import handle_project_command
-    from jarvis.modes.commands import handle_mode_command
     monkeypatch.setattr(registry, "COMMANDS", tuple(replace(c, handler=lambda *a: "ok") for c in registry.COMMANDS))
     assert handle_system_command("ouvre un terminal") == "ok"
     assert handle_session_command("ma session") == "ok"

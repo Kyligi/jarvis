@@ -1,9 +1,11 @@
 import json
 import subprocess
 from unittest.mock import Mock
+
 import pytest
-from jarvis.projects import manager, sessions
+
 from jarvis.modules import projects as legacy
+from jarvis.projects import manager, sessions
 
 
 def test_discovery_depth_hidden_and_symlinks(isolated, tmp_path):

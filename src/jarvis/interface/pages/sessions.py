@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QHBoxLayout, QPushButton
-from jarvis.interface.pages.base import DataPage
+
 from jarvis.interface.components import Card, text_view
+from jarvis.interface.pages.base import DataPage
 
 
 class SessionsPage(DataPage):

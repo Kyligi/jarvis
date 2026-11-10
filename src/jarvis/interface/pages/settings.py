@@ -1,13 +1,21 @@
 from dataclasses import asdict
-from pathlib import Path
 from importlib.metadata import version
+from pathlib import Path
+
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QCheckBox, QSpinBox, QFormLayout, QPushButton, QAbstractSpinBox
-from jarvis.config import settings
-from jarvis.preferences import Preferences
+from PySide6.QtWidgets import (
+    QAbstractSpinBox,
+    QCheckBox,
+    QFormLayout,
+    QPushButton,
+    QSpinBox,
+)
+
 from jarvis import preferences
-from jarvis.interface.pages.base import DataPage
+from jarvis.config import settings
 from jarvis.interface.components import Card, label, text_view
+from jarvis.interface.pages.base import DataPage
+from jarvis.preferences import Preferences
 
 
 class SettingsPage(DataPage):

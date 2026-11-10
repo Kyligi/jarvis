@@ -1,8 +1,9 @@
 """Frontière applicative : résolution, exécution, erreurs et journal sans contenu."""
 import logging
 import sqlite3
-from jarvis.registry import resolve
+
 from jarvis.memory.database import remember
+from jarvis.registry import resolve
 
 logger = logging.getLogger(__name__)
 

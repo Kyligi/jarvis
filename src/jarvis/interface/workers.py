@@ -1,6 +1,7 @@
 """Une tâche à la fois par runner ; seuls les slots GUI manipulent les widgets."""
-from collections.abc import Callable
 import logging
+from collections.abc import Callable
+
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 

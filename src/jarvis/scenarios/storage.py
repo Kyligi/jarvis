@@ -1,16 +1,18 @@
 """JSON atomique, verrou interprocessus, fichiers invalides conservés."""
-from contextlib import contextmanager
-from copy import deepcopy
 import fcntl
 import json
 import os
-from pathlib import Path
 import tempfile
+from contextlib import contextmanager
+from copy import deepcopy
+from datetime import datetime
+from pathlib import Path
 from uuid import uuid4
+
 from jarvis.config import settings
 from jarvis.core.text import normalize_words
-from .model import validate, identifier, now, text
-from datetime import datetime
+
+from .model import identifier, now, text, validate
 
 ROOT = settings.data_dir / 'scenarios'
 

@@ -1,6 +1,7 @@
 """Same-user local IPC: only toggle/stop, never arbitrary commands or focus changes."""
 import os
 from pathlib import Path
+
 from PySide6.QtCore import QObject, QTimer
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import QApplication

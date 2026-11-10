@@ -1,16 +1,18 @@
-from dataclasses import replace
 import threading
+from dataclasses import replace
 from unittest.mock import Mock
+
+import pytest
 from PySide6.QtCore import QTimer
+from test_ai import FakeBackend, call
+from test_interface import pump
+
 from jarvis.ai.backend import Cancelled
 from jarvis.interface.context import AppContext
 from jarvis.interface.mini import JarvisWindow
 from jarvis.monitoring.collector import Snapshot
-from jarvis.voice.controller import State
 from jarvis.voice.backends import Transcript
-from test_ai import FakeBackend, call
-from test_interface import pump
-import pytest
+from jarvis.voice.controller import State
 
 
 @pytest.fixture

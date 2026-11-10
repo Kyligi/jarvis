@@ -1,10 +1,17 @@
 """Single-session controller. Callbacks carry snapshots; no UI or command execution."""
+import threading
+import time
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-import threading
-import time
-from jarvis.voice.backends import Cancelled, VoiceError, PipeWireCapture, WhisperCLI, PiperCLI
+
+from jarvis.voice.backends import (
+    Cancelled,
+    PiperCLI,
+    PipeWireCapture,
+    VoiceError,
+    WhisperCLI,
+)
 from jarvis.voice.config import VoiceConfig
 
 

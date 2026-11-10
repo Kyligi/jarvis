@@ -1,5 +1,7 @@
 import sys
+
 from PySide6.QtWidgets import QApplication
+
 from jarvis.interface.mini import JarvisWindow
 from jarvis.logging_setup import configure_logging
 

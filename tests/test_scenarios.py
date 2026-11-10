@@ -1,16 +1,25 @@
-from copy import deepcopy
 import json
 import threading
+from copy import deepcopy
 from unittest.mock import Mock
+
 import pytest
-from jarvis.scenarios.model import new_scenario, new_action, validate, validate_action, FIELDS
-from jarvis.scenarios.storage import Store, atomic_json, file_lock
-from jarvis.scenarios.engine import Engine, engine
-from jarvis.scenarios.actions import Actions, open_application
-from jarvis.scenarios import actions, commands
-from jarvis.modes import profiles, manager as modes
-from jarvis.services.windows import Window, WindowError, service
+
 from jarvis import registry
+from jarvis.modes import manager as modes
+from jarvis.modes import profiles
+from jarvis.scenarios import actions, commands
+from jarvis.scenarios.actions import Actions, open_application
+from jarvis.scenarios.engine import Engine, engine
+from jarvis.scenarios.model import (
+    FIELDS,
+    new_action,
+    new_scenario,
+    validate,
+    validate_action,
+)
+from jarvis.scenarios.storage import Store, atomic_json
+from jarvis.services.windows import Window, WindowError, service
 
 
 def scenario(*kinds):

@@ -1,7 +1,8 @@
 """Catalogue fermé : fonctions métier autorisées, jamais de shell ou Lua libre."""
-from dataclasses import dataclass
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
+
 from .conversation import object_schema, validate
 
 
@@ -27,8 +28,8 @@ class Tool:
 
 
 def project_target(args):
-    from jarvis.projects import manager
     from jarvis.core.text import normalize_words
+    from jarvis.projects import manager
     rows = [p for p in manager.discover_projects() if normalize_words(p['name']) == normalize_words(args['name'])]
     if len(rows) != 1 or not rows[0]['path'].is_dir():
         raise ValueError('Projet absent ou ambigu ; préciser un nom unique.')
@@ -64,12 +65,12 @@ def mode_target(args):
 
 
 def build_catalogue():
-    from jarvis.projects import manager
-    from jarvis.monitoring import system, diagnostics
-    from jarvis.services import window_commands as windows
-    from jarvis.scenarios import commands as scenarios
     from jarvis.modes import manager as modes
     from jarvis.modes.profiles import load
+    from jarvis.monitoring import diagnostics, system
+    from jarvis.projects import manager
+    from jarvis.scenarios import commands as scenarios
+    from jarvis.services import window_commands as windows
     empty = object_schema({})
     rows = []
     for key, description, handler, source in [

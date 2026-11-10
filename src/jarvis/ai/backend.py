@@ -1,11 +1,12 @@
 """Ollama HTTP local sans proxy, redirection, pull ni API cloud."""
-from abc import ABC, abstractmethod
-from contextlib import contextmanager
 import http.client
 import json
 import socket
 import threading
 import time
+from abc import ABC, abstractmethod
+from contextlib import contextmanager
+
 from .config import endpoint_parts
 
 

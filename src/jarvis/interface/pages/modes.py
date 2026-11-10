@@ -1,13 +1,21 @@
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QPushButton, QHBoxLayout, QFormLayout, QSpinBox, QCheckBox, QComboBox, QTabWidget
-from jarvis.modes import profiles
-from jarvis.scenarios.model import APPLICATIONS, LAYOUTS
-from jarvis.scenarios.engine import engine, format_preview
-from jarvis.scenarios.commands import readable
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QPushButton,
+    QSpinBox,
+    QTabWidget,
+)
+
 from jarvis.config import settings
-from jarvis.modes.manager import MODES
-from jarvis.interface.pages.base import DataPage
 from jarvis.interface.components import Card, label
+from jarvis.interface.pages.base import DataPage
+from jarvis.modes import profiles
+from jarvis.modes.manager import MODES
+from jarvis.scenarios.commands import readable
+from jarvis.scenarios.engine import engine, format_preview
+from jarvis.scenarios.model import APPLICATIONS, LAYOUTS
 
 
 class ModesPage(DataPage):

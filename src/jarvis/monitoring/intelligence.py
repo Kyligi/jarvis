@@ -1,13 +1,13 @@
 
-from collections import deque
 import logging
-from jarvis.persistence.sqlite import connect
-from jarvis.config import settings
 import subprocess
 import time
+from collections import deque
 
 import psutil
 
+from jarvis.config import settings
+from jarvis.persistence.sqlite import connect
 
 # =========================================================
 # CONFIGURATION

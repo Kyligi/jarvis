@@ -1,8 +1,8 @@
-from jarvis.services.windows import service as window_service
-
 import shutil
 import subprocess
+
 from jarvis.config import settings
+from jarvis.services.windows import service as window_service
 
 
 def open_terminal() -> str:

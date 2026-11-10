@@ -1,6 +1,5 @@
-from unittest.mock import Mock
-from jarvis.services.overview import OverviewService
 from jarvis.projects import manager, sessions
+from jarvis.services.overview import OverviewService
 
 
 def test_overview_real_services_temporary_data(project, monkeypatch):

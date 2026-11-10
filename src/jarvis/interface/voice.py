@@ -1,14 +1,26 @@
 """Qt bridge: queued events and the existing CommandBus are the sole UI boundary."""
 from dataclasses import replace
-from PySide6.QtCore import QObject, Signal, Slot, QTimer
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                              QLineEdit, QCheckBox, QFormLayout, QDoubleSpinBox,
-                              QComboBox, QProgressBar, QFileDialog)
+
+from PySide6.QtCore import QObject, QTimer, Signal, Slot
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFormLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QProgressBar,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
+
 from jarvis.interface.components import label
 from jarvis.interface.workers import Runner
-from jarvis.voice import config, commands
-from jarvis.voice.backends import devices, VoiceError
-from jarvis.voice.controller import VoiceController, State
+from jarvis.voice import commands, config
+from jarvis.voice.backends import VoiceError, devices
+from jarvis.voice.controller import State, VoiceController
 
 
 class VoiceBridge(QObject):

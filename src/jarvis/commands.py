@@ -1,5 +1,5 @@
 """Compatibilité V0.3 : le catalogue est désormais dans jarvis.registry."""
-from jarvis.core.text import normalize
+from jarvis.core.text import normalize  # noqa : F401
 
 
 def handle_system_command(message: str) -> str | None:

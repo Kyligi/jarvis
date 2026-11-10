@@ -1,7 +1,7 @@
 """Lecture Git bornée aux trois requêtes de J.A.R.V.I.S."""
 import logging
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 ALLOWED_QUERIES = {
     ("branch", "--show-current"),

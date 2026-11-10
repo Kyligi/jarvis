@@ -1,7 +1,14 @@
 """Surcharges versionnées séparées du TOML et de l’état historique des modes."""
 from copy import deepcopy
-from jarvis.scenarios.model import APPLICATIONS, LAYOUTS, new_scenario, new_action, identifier
-from jarvis.scenarios.storage import read_json, atomic_json, file_lock
+
+from jarvis.scenarios.model import (
+    APPLICATIONS,
+    LAYOUTS,
+    identifier,
+    new_action,
+    new_scenario,
+)
+from jarvis.scenarios.storage import atomic_json, file_lock, read_json
 
 
 def path():

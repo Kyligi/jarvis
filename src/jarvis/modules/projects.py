@@ -1,10 +1,9 @@
 """Découverte et ouverture explicite des projets Rust locaux."""
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 from jarvis.config import settings
-from jarvis.projects.manager import git_summary
 
 ROOT = settings.projects_root
 

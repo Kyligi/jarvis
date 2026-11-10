@@ -1,19 +1,16 @@
-from jarvis.services.windows import service as window_service
-
 import json
 import shutil
 import subprocess
 import time
-from pathlib import Path
 
+from jarvis.config import settings
 from jarvis.projects.manager import (
     database,
     discover_projects,
     get_active_project,
     git_summary,
 )
-
-from jarvis.config import settings
+from jarvis.services.windows import service as window_service
 
 # Workspace de développement
 DEV_WORKSPACE = settings.workspaces["travail"]

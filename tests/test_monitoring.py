@@ -1,8 +1,10 @@
+import sqlite3
 from types import SimpleNamespace as NS
 from unittest.mock import Mock
-import sqlite3
+
 import pytest
-from jarvis.monitoring import intelligence, system, collector, diagnostics
+
+from jarvis.monitoring import collector, diagnostics, intelligence, system
 
 
 @pytest.fixture

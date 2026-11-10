@@ -1,8 +1,17 @@
 """Composants Nebula sans accès au système ni à la persistance."""
 from datetime import datetime
+
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import (QFrame, QLabel, QVBoxLayout, QHBoxLayout,
-                              QPlainTextEdit, QLineEdit, QPushButton, QWidget)
+from PySide6.QtWidgets import (
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPlainTextEdit,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 
 def label(text: str, role: str = "", parent=None) -> QLabel:

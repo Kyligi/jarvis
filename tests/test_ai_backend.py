@@ -1,10 +1,12 @@
 """HTTP simulé : aucun serveur, modèle, réseau ou GPU requis."""
-from io import BytesIO
 import json
 import threading
+from io import BytesIO
 from unittest.mock import Mock
+
 import pytest
-from jarvis.ai.backend import OllamaBackend, AIError, Cancelled
+
+from jarvis.ai.backend import AIError, Cancelled, OllamaBackend
 from jarvis.ai.config import AIConfig
 
 

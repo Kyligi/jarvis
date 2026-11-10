@@ -1,8 +1,10 @@
 import subprocess
 from unittest.mock import Mock
+
 import pytest
-from jarvis.modes import manager as modes
+
 from jarvis.integrations.desktop import focus_workspace
+from jarvis.modes import manager as modes
 
 
 @pytest.mark.parametrize(("name", "workspace"), [("travail", 3), ("gaming", 4), ("etudes", 5)])

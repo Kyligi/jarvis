@@ -1,8 +1,8 @@
 """Schéma fermé : aucune commande, chemin exécutable ou expression libre."""
+import re
 from copy import deepcopy
 from datetime import datetime, timezone
 from uuid import uuid4
-import re
 
 APPLICATIONS = ('editor', 'terminal', 'browser', 'notion', 'steam')
 LAYOUTS = ('developpement', 'etudes', 'gaming')

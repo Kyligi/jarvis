@@ -1,14 +1,26 @@
 """Éditeur déclaratif : widgets typés, opérations métier dans les workers partagés."""
 from copy import deepcopy
+
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import (QLineEdit, QPlainTextEdit, QListWidget, QPushButton,
-                              QHBoxLayout, QFormLayout, QWidget, QComboBox,
-                              QSpinBox, QCheckBox, QMessageBox)
-from jarvis.interface.pages.base import DataPage
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QListWidget,
+    QMessageBox,
+    QPlainTextEdit,
+    QPushButton,
+    QSpinBox,
+    QWidget,
+)
+
 from jarvis.interface.components import label, text_view
-from jarvis.scenarios.model import FIELDS, new_action, new_scenario, validate
-from jarvis.scenarios.engine import engine, format_preview, format_result
+from jarvis.interface.pages.base import DataPage
 from jarvis.scenarios.commands import readable
+from jarvis.scenarios.engine import engine, format_preview, format_result
+from jarvis.scenarios.model import FIELDS, new_action, new_scenario, validate
 
 
 class ActionForm(QWidget):
@@ -298,6 +310,7 @@ class ScenariosPage(DataPage):
             self.state.setText(str(error))
             return
         from uuid import uuid4
+
         from jarvis.scenarios.model import now
         value.update(id=uuid4().hex, name=value['name'][:90] + ' — copie', created_at=now(), updated_at=now())
         self.show_draft(value)

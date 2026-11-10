@@ -1,14 +1,15 @@
 """Exécution synchrone à placer dans un worker ; état et annulation thread-safe."""
-from copy import deepcopy
 import hashlib
 import json
 import secrets
 import threading
 import time
+from copy import deepcopy
 from uuid import uuid4
-from .model import validate, now
-from .storage import Store, file_lock
+
 from .actions import Actions
+from .model import now, validate
+from .storage import Store, file_lock
 
 
 class Engine:

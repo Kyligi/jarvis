@@ -1,19 +1,19 @@
 """Catalogue unique : résolution sans effets de bord, aide et handlers explicites."""
-from dataclasses import dataclass
-from importlib.metadata import version
 import re
 from collections.abc import Callable
+from dataclasses import dataclass
+from importlib.metadata import version
 
+from jarvis import omarchy
+from jarvis.ai import commands as ai
 from jarvis.core.text import normalize, normalize_words, strip_address
-from jarvis.monitoring import system, intelligence, diagnostics
-from jarvis.projects import manager, sessions
 from jarvis.modes import manager as modes
 from jarvis.modules import projects as legacy_projects
-from jarvis.voice import commands as voice
-from jarvis.ai import commands as ai
-from jarvis import omarchy
-from jarvis.services import window_commands as windows
+from jarvis.monitoring import diagnostics, intelligence, system
+from jarvis.projects import manager, sessions
 from jarvis.scenarios import commands as scenarios
+from jarvis.services import window_commands as windows
+from jarvis.voice import commands as voice
 
 Handler = Callable[..., str]
 

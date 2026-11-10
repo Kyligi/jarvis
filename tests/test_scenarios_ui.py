@@ -1,12 +1,15 @@
 import threading
 from unittest.mock import Mock
+
 from PySide6.QtCore import QThread
 from PySide6.QtWidgets import QMessageBox
-from jarvis.scenarios.engine import engine
-from jarvis.scenarios.model import new_scenario, new_action
-from jarvis.modes import profiles
-from test_hud import ui, select
+from test_hud import select
+from test_hud import ui as ui
 from test_interface import pump
+
+from jarvis.modes import profiles
+from jarvis.scenarios.engine import engine
+from jarvis.scenarios.model import new_action, new_scenario
 
 
 def test_scenario_editor_crud_and_forms(qapp, ui, monkeypatch):

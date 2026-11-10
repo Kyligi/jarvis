@@ -1,16 +1,18 @@
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
-import threading
+
 import pytest
 from PySide6.QtCore import QAbstractAnimation, QThread
 from PySide6.QtWidgets import QWidget
+from test_interface import pump
+
+from jarvis import preferences
 from jarvis.interface.context import AppContext
 from jarvis.interface.mini import JarvisWindow
 from jarvis.monitoring.collector import Snapshot
 from jarvis.preferences import Preferences
-from jarvis import preferences
-from test_interface import pump
 
 
 class FakeService:

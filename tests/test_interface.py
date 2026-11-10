@@ -1,8 +1,10 @@
 import threading
 import time
-from PySide6.QtCore import QTimer, QThread
+
+from PySide6.QtCore import QThread, QTimer
+
 from jarvis.interface.workers import Runner
-from jarvis.monitoring.collector import Snapshot, Collector
+from jarvis.monitoring.collector import Collector, Snapshot
 
 
 def pump(qapp, predicate, timeout=3):

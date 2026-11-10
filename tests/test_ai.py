@@ -1,13 +1,14 @@
-from dataclasses import replace
 import json
-import threading
+from dataclasses import replace
 from unittest.mock import Mock
+
 import pytest
+
+from jarvis.ai.backend import AIError
+from jarvis.ai.commands import route
 from jarvis.ai.config import AIConfig, load, save
 from jarvis.ai.conversation import Conversation, object_schema
 from jarvis.ai.tools import Tool, build_catalogue
-from jarvis.ai.backend import AIError, Cancelled
-from jarvis.ai.commands import route
 
 
 class FakeBackend:
@@ -209,7 +210,7 @@ def test_disabled_backend_never_called():
 
 def test_scenario_keeps_second_historical_confirmation(monkeypatch):
     from jarvis.scenarios.engine import engine
-    from jarvis.scenarios.model import new_scenario, new_action
+    from jarvis.scenarios.model import new_action, new_scenario
     actions = Mock(check=Mock(return_value='OK'), execute=Mock(return_value='OK'))
     monkeypatch.setattr(engine, 'actions', actions)
     value = engine.store.save(new_scenario('Révisions', [new_action('move_window', target='Foot', workspace=3)]), create=True)
@@ -237,7 +238,7 @@ def test_scenario_edit_invalidates_ai_approval(monkeypatch):
 
 
 def test_window_identity_change_refuses_action(monkeypatch):
-    from jarvis.services.windows import service, Window
+    from jarvis.services.windows import Window, service
     window = Window('0x123', 'foot', 'terminal', 3, '3', 0, False, 123)
     monkeypatch.setattr(service, 'windows', lambda: [window])
     execute = Mock()

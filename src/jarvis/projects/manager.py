@@ -3,13 +3,13 @@ import os
 import shutil
 import subprocess
 import time
-from pathlib import Path
 from contextlib import contextmanager
+from pathlib import Path
 
 from jarvis.config import settings
-from jarvis.persistence.sqlite import connect
 from jarvis.core.text import normalize_words as normalize
 from jarvis.integrations.git import read_git as git
+from jarvis.persistence.sqlite import connect
 
 PROJECTS_ROOT = settings.projects_root
 DB_PATH = settings.data_dir / "projects.db"

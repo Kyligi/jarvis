@@ -1,13 +1,12 @@
-from jarvis.services.windows import service as window_service, existing_application, WindowError
-
 import json
+import logging
 import shutil
 import subprocess
 
-from jarvis.projects.sessions import active_path
 from jarvis.config import settings
-import logging
-
+from jarvis.projects.sessions import active_path
+from jarvis.services.windows import WindowError, existing_application
+from jarvis.services.windows import service as window_service
 
 STATE_PATH = settings.data_dir / "active_mode.json"
 

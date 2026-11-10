@@ -1,8 +1,9 @@
 """Inventaire Hyprland, validations et actions Lua ciblées, sans dépendance Qt."""
-from dataclasses import dataclass
 import json
 import re
 import subprocess
+from dataclasses import dataclass
+
 from jarvis.core.text import normalize_words
 from jarvis.integrations.desktop import focus_workspace
 

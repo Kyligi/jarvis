@@ -1,21 +1,32 @@
 """Fenêtre HUD unique, masquée à la fermeture et réutilisée par Mini."""
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, Slot
-from PySide6.QtGui import QShortcut, QKeySequence
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
-                              QHBoxLayout, QListWidget, QStackedWidget, QScrollArea,
-                              QGraphicsOpacityEffect, QPushButton, QSplitter)
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, Slot
+from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtWidgets import (
+    QApplication,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QListWidget,
+    QMainWindow,
+    QPushButton,
+    QScrollArea,
+    QSplitter,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
 from jarvis.interface import theme
 from jarvis.interface.components import CommandConsole, label
-from jarvis.interface.voice import VoicePage, VoiceControls
 from jarvis.interface.pages.assistant import AssistantPage
 from jarvis.interface.pages.home import HomePage
-from jarvis.interface.pages.system import SystemPage
-from jarvis.interface.pages.projects import ProjectsPage
-from jarvis.interface.pages.sessions import SessionsPage
 from jarvis.interface.pages.modes import ModesPage
-from jarvis.interface.pages.settings import SettingsPage
-from jarvis.interface.pages.windows import WindowsPage
+from jarvis.interface.pages.projects import ProjectsPage
 from jarvis.interface.pages.scenarios import ScenariosPage
+from jarvis.interface.pages.sessions import SessionsPage
+from jarvis.interface.pages.settings import SettingsPage
+from jarvis.interface.pages.system import SystemPage
+from jarvis.interface.pages.windows import WindowsPage
+from jarvis.interface.voice import VoiceControls, VoicePage
 
 
 class HudWindow(QMainWindow):

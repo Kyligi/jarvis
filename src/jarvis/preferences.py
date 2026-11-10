@@ -1,9 +1,10 @@
 """Préférences d'interface séparées du TOML métier, remplacées atomiquement."""
-from dataclasses import asdict, dataclass
 import os
-from pathlib import Path
 import tempfile
 import tomllib
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
 from jarvis.config import settings
 
 PREFERENCES_PATH = settings.data_dir / "ui.toml"

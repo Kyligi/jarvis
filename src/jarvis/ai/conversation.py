@@ -1,10 +1,11 @@
 """Session, routage et permissions ; aucune dépendance Qt ou persistance."""
-from dataclasses import dataclass
 import json
 import re
 import secrets
 import threading
 import time
+from dataclasses import dataclass
+
 from .backend import AIError, Cancelled, OllamaBackend, decode
 from .config import AIConfig
 

@@ -1,6 +1,7 @@
 """Chargements de page à la demande, jamais de service appelé au dessin."""
 from PySide6.QtCore import Slot
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+
 from jarvis.interface.components import label
 
 

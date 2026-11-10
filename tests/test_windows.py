@@ -1,11 +1,20 @@
-from dataclasses import replace
 import json
 import subprocess
+from dataclasses import replace
 from unittest.mock import Mock
+
 import pytest
-from jarvis.services.windows import Window, WindowError, WindowService, parse_windows, build_action, service
-from jarvis.services import window_commands as commands
+
 from jarvis import registry
+from jarvis.services import window_commands as commands
+from jarvis.services.windows import (
+    Window,
+    WindowError,
+    WindowService,
+    build_action,
+    parse_windows,
+    service,
+)
 
 
 def window(**kwargs):
@@ -195,11 +204,12 @@ def test_mode_reuses_exact_class_not_title(monkeypatch):
 
 
 def test_windows_page_refresh_selection_errors_and_worker(qapp, monkeypatch):
+    from PySide6.QtCore import QThread
+    from test_interface import pump
+
     from jarvis.interface.context import AppContext
     from jarvis.interface.pages.windows import WindowsPage
     from jarvis.monitoring.collector import Snapshot
-    from PySide6.QtCore import QThread
-    from test_interface import pump
     target = window()
     state = {'windows': [target], 'workspaces': [{'id': 3, 'name': '3'}], 'monitors': [{'name': 'test'}], 'current': {'name': '3'}}
     def load():
@@ -249,8 +259,8 @@ def test_windows_page_refresh_selection_errors_and_worker(qapp, monkeypatch):
 
 
 def test_protected_page_selection_and_preservation(qapp):
-    from jarvis.interface.pages.windows import WindowsPage
     from jarvis.interface.context import AppContext
+    from jarvis.interface.pages.windows import WindowsPage
     from jarvis.monitoring.collector import Snapshot
     context = AppContext(collector=Mock(collect=Mock(return_value=Snapshot(1, 2, 3, None, {}))))
     page = WindowsPage(context)

@@ -1,11 +1,23 @@
 """Assistant Nebula : widgets Qt, moteur et réseau exclusivement dans les workers."""
 from dataclasses import replace
+
 from PySide6.QtCore import Qt, Slot
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
-                              QLineEdit, QPushButton, QComboBox, QCheckBox,
-                              QFormLayout, QSpinBox, QDoubleSpinBox)
-from jarvis.interface.components import label
+from PySide6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFormLayout,
+    QHBoxLayout,
+    QLineEdit,
+    QPlainTextEdit,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
+
 from jarvis.ai import config
+from jarvis.interface.components import label
 
 
 class AssistantPage(QWidget):

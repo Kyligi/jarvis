@@ -1,12 +1,20 @@
-from dataclasses import replace
 import json
-from pathlib import Path
 import threading
+from dataclasses import replace
+from pathlib import Path
 from unittest.mock import Mock
+
 import pytest
+
+from jarvis.voice.backends import (
+    Cancelled,
+    PiperCLI,
+    Transcript,
+    VoiceError,
+    WhisperCLI,
+)
 from jarvis.voice.config import VoiceConfig, load, save
-from jarvis.voice.controller import VoiceController, State
-from jarvis.voice.backends import Transcript, VoiceError, WhisperCLI, PiperCLI, Cancelled
+from jarvis.voice.controller import State, VoiceController
 from jarvis.voice.wake import WakeGate
 
 
@@ -191,6 +199,7 @@ def test_missing_model_no_process(backend, method, field, tmp_path):
 
 def test_whisper_format_cpu_cleanup_and_confidence(tmp_path, monkeypatch):
     import wave
+
     from jarvis.voice import backends as b
     model = tmp_path / 'base.bin'
     model.touch()
@@ -229,7 +238,7 @@ def test_wake_gate_opt_in_false_positive_cooldown():
 
 
 def test_historical_commands_preserved():
-    from jarvis.registry import COMMANDS, resolve, help_text
+    from jarvis.registry import COMMANDS, help_text, resolve
     assert len([c for c in COMMANDS if not c.id.startswith(('voice.', 'ai.'))]) == 59
     assert len([c for c in COMMANDS if c.id.startswith('voice.')]) == 10
     for c in COMMANDS:
@@ -280,6 +289,7 @@ def test_piper_arguments_no_text_in_argv_and_cleanup(tmp_path, monkeypatch):
 
 def test_timeout_reaps_and_does_not_expose_stderr(monkeypatch):
     import subprocess
+
     from jarvis.voice import backends as b
     process = Mock()
     process.communicate.side_effect = subprocess.TimeoutExpired('private', .05)
@@ -313,8 +323,9 @@ def test_tts_failure_text_fallback():
 
 
 def test_qt_bridge_confirmation_shares_bus(qapp, monkeypatch):
-    from jarvis.interface.context import AppContext
     from test_interface import pump
+
+    from jarvis.interface.context import AppContext
     executor = Mock(return_value='Résultat réel')
     context = AppContext(executor=executor)
     try:
@@ -358,10 +369,10 @@ def test_stop_has_priority_over_late_command_response():
 
 
 def test_scenario_voice_keeps_existing_approval(monkeypatch):
-    from jarvis.scenarios.engine import engine
-    from jarvis.scenarios import storage
-    from jarvis.scenarios.model import new_scenario, new_action
     from jarvis.registry import resolve
+    from jarvis.scenarios import storage
+    from jarvis.scenarios.engine import engine
+    from jarvis.scenarios.model import new_action, new_scenario
     value = new_scenario('Révisions', [new_action('apply_layout', layout='etudes', workspace=3)])
     storage.Store().save(value, create=True)
     fake = Mock()

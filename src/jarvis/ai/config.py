@@ -1,14 +1,15 @@
 """Configuration IA indépendante ; aucune conversation sur disque."""
-from dataclasses import asdict, dataclass
 import ipaddress
 import json
 import math
 import os
-from pathlib import Path
 import re
 import tempfile
 import tomllib
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from urllib.parse import urlsplit
+
 from jarvis.config import settings
 
 PATH = settings.data_dir / 'ai.toml'

@@ -1,8 +1,9 @@
 """Lectures à la demande ; aucun Git ni SQLite dans les widgets."""
 from pathlib import Path
-from jarvis.projects import manager, sessions
+
 from jarvis.modes import manager as modes
 from jarvis.monitoring import intelligence, system
+from jarvis.projects import manager, sessions
 
 
 class OverviewService:

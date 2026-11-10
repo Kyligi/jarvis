@@ -1,22 +1,24 @@
 import os
+
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 os.environ["QT_QPA_PLATFORMTHEME"] = ""
 os.environ["QT_STYLE_OVERRIDE"] = "Fusion"
 
 import subprocess
 from unittest.mock import Mock
+
 import pytest
 
 
 @pytest.fixture(autouse=True)
 def isolated(tmp_path, monkeypatch):
     """Aucun accès aux bases utilisateur ni lancement de programme réel."""
-    from jarvis.projects import manager
-    from jarvis.modules import projects
-    from jarvis.modes import manager as modes
-    from jarvis.monitoring import intelligence
-    from jarvis.memory import database
     from jarvis.ai import config as ai_config
+    from jarvis.memory import database
+    from jarvis.modes import manager as modes
+    from jarvis.modules import projects
+    from jarvis.monitoring import intelligence
+    from jarvis.projects import manager
     monkeypatch.setattr(ai_config, 'PATH', tmp_path / 'ai.toml')
     from jarvis.voice import config as voice_config
     monkeypatch.setattr(voice_config, "PATH", tmp_path / "voice.toml")

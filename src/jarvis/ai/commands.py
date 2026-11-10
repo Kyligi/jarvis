@@ -6,6 +6,7 @@ def request(action, *args):
 
 def route(session, text, executor):
     from dataclasses import replace
+
     from jarvis.registry import resolve
     resolved = resolve(text)
     if resolved is None:

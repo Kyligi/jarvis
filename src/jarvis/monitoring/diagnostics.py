@@ -3,7 +3,6 @@ import psutil
 
 from jarvis.monitoring.intelligence import (
     read_sensors,
-    history_text,
 )
 
 

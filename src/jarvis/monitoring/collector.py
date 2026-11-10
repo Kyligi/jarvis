@@ -1,10 +1,10 @@
 """Collecte périodique indépendante de Qt, exécutée par un worker."""
 
-from dataclasses import dataclass
 import logging
-from pathlib import Path
 import sqlite3
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
 import psutil
 

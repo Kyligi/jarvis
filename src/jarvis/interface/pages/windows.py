@@ -1,9 +1,16 @@
 """Inventaire réel et actions ciblées ; toutes les lectures/actions sur workers."""
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem, QHBoxLayout, QPushButton, QComboBox
+from PySide6.QtWidgets import (
+    QComboBox,
+    QHBoxLayout,
+    QPushButton,
+    QTreeWidget,
+    QTreeWidgetItem,
+)
+
 from jarvis.interface.components import label
 from jarvis.interface.pages.base import DataPage
-from jarvis.services.windows import service, WindowError
+from jarvis.services.windows import WindowError, service
 
 
 class WindowsPage(DataPage):

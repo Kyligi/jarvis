@@ -1,5 +1,7 @@
 import sqlite3
+
 import pytest
+
 from jarvis.config import load_settings
 from jarvis.persistence.sqlite import connect
 

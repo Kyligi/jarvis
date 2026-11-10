@@ -1,5 +1,6 @@
 """Adaptateurs textuels du registre, également utilisables par le HUD."""
 from functools import wraps
+
 from .engine import engine, format_preview, format_result
 
 

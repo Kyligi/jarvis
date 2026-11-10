@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
-from jarvis.persistence.sqlite import connect
+
 from jarvis.config import settings
+from jarvis.persistence.sqlite import connect
 
 DB = settings.data_dir / "memory.sqlite3"
 
