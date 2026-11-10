@@ -1,191 +1,295 @@
-from collections import deque
-from jarvis.interface.context import MonitorHub
-from jarvis.interface import theme
 
-from PySide6.QtCore import Qt, QTimer, Slot
-from PySide6.QtGui import QColor, QPainter, QPen
+"""Affichage numérique du monitoring Jarvis.
+
+Interface légère sans courbes ni barres de progression.
+Réutilise MonitorHub et les données du collecteur existant.
+"""
+
+from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QProgressBar, QGridLayout
+    QApplication,
+    QWidget,
+    QVBoxLayout,
+    QGridLayout,
+    QLabel,
 )
 
+from jarvis.interface.context import MonitorHub
 
-class HistoryGraph(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.cpu = deque(maxlen=60)
-        self.ram = deque(maxlen=60)
-        self.setMinimumHeight(95)
 
-    def add_values(self, cpu, ram):
-        self.cpu.append(cpu)
-        self.ram.append(ram)
-        self.update()
+def format_number(value, decimals=2):
+    """Nombre avec virgule française."""
+    if value is None:
+        return "—"
+    return f"{value:.{decimals}f}".replace(".", ",")
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(
-            QPainter.RenderHint.Antialiasing
-        )
 
-        width = self.width()
-        height = self.height()
-
-        painter.setPen(QPen(QColor(theme.BORDER), 1))
-        for level in (25, 50, 75):
-            y = height * (1 - level / 100)
-            painter.drawLine(
-                0, int(y), width, int(y)
-            )
-
-        for values, color in (
-            (self.cpu, theme.CYAN),
-            (self.ram, theme.VIOLET),
-        ):
-            if len(values) < 2:
-                continue
-
-            painter.setPen(QPen(QColor(color), 2))
-            data = list(values)
-
-            for i in range(1, len(data)):
-                x1 = (i - 1) * width / 59
-                x2 = i * width / 59
-                y1 = height * (1 - data[i - 1] / 100)
-                y2 = height * (1 - data[i] / 100)
-
-                painter.drawLine(
-                    int(x1), int(y1),
-                    int(x2), int(y2)
-                )
+def format_gib(value):
+    """Convertit les octets en Gio."""
+    if value is None:
+        return "—"
+    return format_number(value / (1024 ** 3))
 
 
 class Metric(QWidget):
+    """Carte affichant une mesure et ses détails numériques."""
+
     def __init__(self, name):
         super().__init__()
 
-        self.setMinimumHeight(76)
+        self.setObjectName("metricCard")
+
         layout = QVBoxLayout(self)
-        layout.setSpacing(3)
-        layout.setContentsMargins(8, 7, 8, 7)
+        layout.setContentsMargins(10, 9, 10, 9)
+        layout.setSpacing(4)
 
         self.title = QLabel(name)
-        self.value = QLabel("-- %")
-        self.value.setObjectName("metricValue")
-        self.bar = QProgressBar()
+        self.title.setObjectName("metricTitle")
 
-        self.bar.setRange(0, 100)
-        self.bar.setTextVisible(False)
-        self.bar.setFixedHeight(6)
+        self.value = QLabel("—")
+        self.value.setObjectName("metricValue")
+
+        self.detail = QLabel("")
+        self.detail.setObjectName("metricDetail")
+        self.detail.setWordWrap(True)
 
         layout.addWidget(self.title)
         layout.addWidget(self.value)
-        layout.addWidget(self.bar)
+        layout.addWidget(self.detail)
 
-    def set_value(self, value, text=None):
-        value = max(0, min(100, float(value)))
-        self.bar.setValue(round(value))
-        self.value.setText(text or f"{value:.0f} %")
+        self.setStyleSheet("""
+            QWidget#metricCard {
+                background-color: #15243A;
+                border: 1px solid #263C54;
+                border-radius: 10px;
+            }
+
+            QLabel {
+                border: none;
+                background: transparent;
+            }
+
+            QLabel#metricTitle {
+                color: #92AEC6;
+                font-size: 11px;
+                font-weight: 600;
+            }
+
+            QLabel#metricValue {
+                color: #EAF8FF;
+                font-size: 21px;
+                font-weight: 700;
+            }
+
+            QLabel#metricDetail {
+                color: #9DB5C9;
+                font-size: 11px;
+            }
+        """)
+
+    def set_value(self, value, detail=""):
+        """Met à jour la valeur affichée."""
+        self.value.setText(str(value))
+        self.detail.setText(str(detail))
 
 
 class MonitorDashboard(QWidget):
+    """Tableau de bord numérique partagé par Mini et HUD."""
+
     def __init__(self, parent=None, monitor=None, compact=False):
         super().__init__(parent)
 
         self.compact = compact
+        self.active = True
+
         self.setObjectName("monitorDashboard")
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(8)
+        layout.setSpacing(7)
         layout.setContentsMargins(10, 10, 10, 10)
 
         title = QLabel("SYSTEM MONITOR  •  LIVE")
         layout.addWidget(title)
 
         grid = QGridLayout()
-        grid.setSpacing(8)
+        grid.setSpacing(7)
 
         self.cpu = Metric("CPU")
         self.ram = Metric("RAM")
         self.disk = Metric("SSD / DISQUE")
         self.battery = Metric("BATTERIE")
 
-        for index, metric in enumerate((self.cpu, self.ram, self.disk, self.battery)):
-            grid.addWidget(metric, 0 if compact else index // 2, index if compact else index % 2)
+        metrics = (
+            self.cpu,
+            self.ram,
+            self.disk,
+            self.battery,
+        )
+
+        for index, metric in enumerate(metrics):
+            # Mini : une rangée de 4 indicateurs.
+            # HUD : disposition 2 x 2.
+            row = 0 if compact else index // 2
+            column = index if compact else index % 2
+            grid.addWidget(metric, row, column)
 
         layout.addLayout(grid)
 
-        self.graph = HistoryGraph()
-        layout.addWidget(self.graph)
-
-        legend = QLabel(
-            "● CPU (cyan)     ● RAM (violet)"
-        )
-        layout.addWidget(legend)
-
         self.temperature = QLabel(
-            "Température : recherche des capteurs..."
+            "Températures : recherche des capteurs…"
         )
         self.temperature.setWordWrap(True)
+
         layout.addWidget(self.temperature)
 
+        # Conserver le collecteur partagé existant.
         self.monitor = monitor or MonitorHub(self)
         self.owns_monitor = monitor is None
-        self.active = True
+
         self.runner = self.monitor.runner
         self.timer = self.monitor.timer
-        self.monitor.updated.connect(self.receive_snapshot)
-        self.monitor.failed.connect(self.show_error)
+
+        self.monitor.updated.connect(
+            self.receive_snapshot
+        )
+        self.monitor.failed.connect(
+            self.show_error
+        )
+
         if self.owns_monitor:
-            QApplication.instance().aboutToQuit.connect(self.monitor.shutdown)
+            app = QApplication.instance()
+            if app is not None:
+                app.aboutToQuit.connect(
+                    self.monitor.shutdown
+                )
+
         if self.monitor.latest is not None:
             self.apply_snapshot(self.monitor.latest)
 
     def set_active(self, active):
+        """Évite de rafraîchir une page inactive."""
         self.active = active
+
         if active and self.monitor.latest is not None:
             self.apply_snapshot(self.monitor.latest)
-            self.graph.cpu.clear()
-            self.graph.ram.clear()
-            for cpu, ram in self.monitor.history:
-                self.graph.cpu.append(cpu)
-                self.graph.ram.append(ram)
-            self.graph.update()
+
+    @Slot()
+    def refresh(self):
+        """Demande un rafraîchissement au service existant."""
+        self.monitor.refresh()
 
     @Slot(object)
     def receive_snapshot(self, snapshot):
         if self.active:
             self.apply_snapshot(snapshot)
 
-    @Slot()
-    def refresh(self):
-        self.monitor.refresh()
-
     @Slot(str)
     def show_error(self, error):
-        self.temperature.setText(f"Monitoring indisponible : {error}")
+        self.temperature.setText(
+            f"Monitoring indisponible : {error}"
+        )
 
     @Slot(object)
     def apply_snapshot(self, snapshot):
-        cpu, ram, disk, battery = snapshot.cpu, snapshot.ram, snapshot.disk, snapshot.battery
-        self.cpu.set_value(cpu)
-        self.ram.set_value(ram)
-        self.disk.set_value(disk)
-
-        if battery is None:
-            self.battery.set_value(0, "Non détectée")
-        else:
-            self.battery.set_value(
-                battery.percent,
-                f"{battery.percent:.0f} %"
-                + (" ⚡" if battery.power_plugged else "")
-            )
-
-        self.graph.add_values(cpu, ram)
-
+        """Affiche les mesures exactes du Snapshot."""
 
         # ==========================================
-        # V0.6 — TEMPÉRATURES AMD
+        # CPU
+        # ==========================================
+
+        cpu_details = []
+
+        if snapshot.cpu_cores is not None:
+            cpu_details.append(
+                f"{snapshot.cpu_cores} cœurs"
+            )
+
+        if snapshot.cpu_threads is not None:
+            cpu_details.append(
+                f"{snapshot.cpu_threads} threads"
+            )
+
+        if snapshot.cpu_freq_mhz is not None:
+            cpu_details.append(
+                f"{format_number(snapshot.cpu_freq_mhz / 1000)} GHz"
+            )
+
+        self.cpu.set_value(
+            f"{format_number(snapshot.cpu, 1)} %",
+            " · ".join(cpu_details),
+        )
+
+        # ==========================================
+        # RAM
+        # ==========================================
+
+        ram_used = format_gib(snapshot.ram_used)
+        ram_total = format_gib(snapshot.ram_total)
+
+        if snapshot.ram_used is not None:
+            ram_value = f"{ram_used} Gio"
+        else:
+            ram_value = f"{format_number(snapshot.ram, 1)} %"
+
+        self.ram.set_value(
+            ram_value,
+            (
+                f"{ram_used} / {ram_total} Gio"
+                f" · {format_number(snapshot.ram, 1)} %"
+            ),
+        )
+
+        # ==========================================
+        # DISQUE
+        # ==========================================
+
+        disk_used = format_gib(snapshot.disk_used)
+        disk_total = format_gib(snapshot.disk_total)
+        disk_free = format_gib(snapshot.disk_free)
+
+        if snapshot.disk_used is not None:
+            disk_value = f"{disk_used} Gio"
+        else:
+            disk_value = f"{format_number(snapshot.disk, 1)} %"
+
+        disk_detail = (
+            f"{disk_used} / {disk_total} Gio"
+            f" · {format_number(snapshot.disk, 1)} %"
+        )
+
+        if snapshot.disk_free is not None:
+            disk_detail += f" · {disk_free} Gio libres"
+
+        self.disk.set_value(
+            disk_value,
+            disk_detail,
+        )
+
+        # ==========================================
+        # BATTERIE
+        # ==========================================
+
+        battery = snapshot.battery
+
+        if battery is None:
+            self.battery.set_value(
+                "—",
+                "Batterie non détectée",
+            )
+        else:
+            status = (
+                "Branchée"
+                if battery.power_plugged
+                else "Sur batterie"
+            )
+
+            self.battery.set_value(
+                f"{format_number(battery.percent, 1)} %",
+                status,
+            )
+
+        # ==========================================
+        # TEMPÉRATURES
         # ==========================================
 
         sensors = snapshot.sensors
@@ -195,18 +299,34 @@ class MonitorDashboard(QWidget):
 
             for name, value in sensors.items():
                 temperatures.append(
-                    f"{name} : {value:.1f} °C"
+                    f"{name} : {format_number(value, 1)} °C"
                 )
 
-            self.temperature.setText(
-                "\n".join(temperatures[:3] if self.compact else temperatures)
-                + (f"\n+ {len(temperatures) - 3} capteur(s) dans le HUD" if self.compact and len(temperatures) > 3 else "")
-            )
+            if self.compact:
+                shown = temperatures[:3]
+            else:
+                shown = temperatures
+
+            result = " · ".join(shown)
+
+            if self.compact and len(temperatures) > 3:
+                remaining = len(temperatures) - 3
+                result += f" · +{remaining} capteur(s)"
+
+            self.temperature.setText(result)
 
         else:
             self.temperature.setText(
                 "Capteurs de température indisponibles"
             )
 
+        # ==========================================
+        # AVERTISSEMENTS
+        # ==========================================
+
         if snapshot.warning:
-            self.temperature.setText(self.temperature.text() + "\n" + snapshot.warning)
+            self.temperature.setText(
+                self.temperature.text()
+                + "\n"
+                + snapshot.warning
+            )

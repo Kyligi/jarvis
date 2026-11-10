@@ -80,7 +80,8 @@ def test_creation_navigation_and_shared_services(qapp, ui):
     assert mini.dashboard.monitor is hud.pages[1].dashboard.monitor is context.monitor
     assert mini.console.bus is hud.console.bus is context.commands
     assert collector.collect.call_count == 1
-    assert len(hud.pages[1].dashboard.graph.cpu) <= 1
+    assert not hasattr(hud.pages[1].dashboard, "graph")
+    assert not hasattr(hud.pages[1].dashboard.cpu, "bar")
     for index in range(10):
         select(qapp, hud, index)
         assert hud.stack.currentIndex() == index
@@ -265,15 +266,40 @@ def test_render_all_pages(qapp, ui, tmp_path):
 
 def test_hidden_dashboard_keeps_history_without_rendering(qapp, ui):
     _, hud, context, _, _, _ = ui
-    dashboard = hud.pages[1].dashboard
-    before = list(dashboard.graph.cpu)
-    for value in (10, 20, 30):
-        context.monitor.receive(Snapshot(value, 40, 30, None, {}))
-    assert list(dashboard.graph.cpu) == before
-    select(qapp, hud, 1)
-    assert list(dashboard.graph.cpu)[-3:] == [10, 20, 30]
-    assert dashboard.cpu.bar.value() == 30
 
+    dashboard = hud.pages[1].dashboard
+
+    # Le monitoring conserve son historique.
+    history_before = len(context.monitor.history)
+
+    # Le dashboard devient inactif.
+    dashboard.set_active(False)
+
+    # La valeur affichée ne doit pas changer.
+    displayed_before = dashboard.cpu.value.text()
+
+    # Simuler une nouvelle mesure.
+    from jarvis.monitoring.collector import Snapshot
+
+    snapshot = Snapshot(
+        cpu=75,
+        ram=60,
+        disk=40,
+        battery=None,
+        sensors={},
+    )
+
+    context.monitor.history.append((75, 60))
+    dashboard.receive_snapshot(snapshot)
+
+    assert len(context.monitor.history) == history_before + 1
+    assert dashboard.cpu.value.text() == displayed_before
+
+    # Réactivation : on affiche le dernier snapshot connu.
+    context.monitor.latest = snapshot
+    dashboard.set_active(True)
+
+    assert dashboard.cpu.value.text() == "75,0 %"
 
 def test_requested_mode_distinct_from_saved_mode(qapp, ui):
     _, hud, context, _, _, executor = ui

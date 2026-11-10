@@ -48,9 +48,10 @@ def test_dashboard_snapshot_and_command(qapp, monkeypatch):
     window = mini.JarvisWindow()
     try:
         pump(qapp, lambda: window.dashboard.runner.task is None)
-        assert window.dashboard.cpu.bar.value() == 30
-        assert list(window.dashboard.graph.ram) == [40]
-        assert "55.0" in window.dashboard.temperature.text()
+        assert window.dashboard.cpu.value.text() == "30,0 %"
+        assert window.dashboard.ram.value.text() == "40,0 %"
+        assert not hasattr(window.dashboard, "graph")
+        assert "CPU AMD : 55,0 °C" in window.dashboard.temperature.text()
         assert window.dashboard.timer.interval() == 2000
         window.command.setText("aide")
         window.run_command()
@@ -58,7 +59,7 @@ def test_dashboard_snapshot_and_command(qapp, monkeypatch):
         assert window.output.toPlainText() == "Réponse simulée"
         assert window.command.isEnabled()
         assert worker_threads[0] != qapp.thread()
-        # Rendu Qt hors écran : vérifie aussi le paintEvent du graphe.
+        # Rendu Qt hors écran : vérifie les cartes numériques.
         window.dashboard.apply_snapshot(snapshot)
         assert not window.grab().isNull()
     finally:
