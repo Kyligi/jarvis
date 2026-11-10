@@ -34,7 +34,7 @@ def ai_ui(qapp):
 
 def test_assistant_navigation_text_and_clear(ai_ui, qapp):
     context, mini, page = ai_ui
-    assert len(mini.hud.pages) == 10
+    assert len(mini.hud.pages) == 12
     assert context.commands.submit('ouvre assistant')
     pump(qapp, lambda: not context.commands.busy)
     assert mini.hud.navigation.currentRow() == 9

@@ -81,6 +81,7 @@ class CommandBus(QObject):
             listener=self.ai_event.emit,
             memory_service=self.memory_service,
             conversation_service=self.conversation_store,
+	    persistence_saver=ai_config.save,
         )
         self.inference_available = lambda: True
         self.runner = Runner(self)

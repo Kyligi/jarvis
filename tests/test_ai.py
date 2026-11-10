@@ -44,12 +44,25 @@ def test_local_only(endpoint):
         AIConfig(endpoint=endpoint)
 
 
-@pytest.mark.parametrize('kwargs', [{'model': 'qwen3:cloud'}, {'conversation_persistence': True},
-    {'tool_call_limit': True}, {'temperature': float('nan')}, {'enabled': 1}, {'model': '../bad\n'}])
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"model": "qwen3:cloud"},
+        {"conversation_persistence": 1},
+        {"conversation_persistence": "true"},
+        {"tool_call_limit": True},
+        {"temperature": float("nan")},
+        {"enabled": 1},
+        {"model": "../bad\n"},
+    ],
+)
 def test_config_strict(kwargs):
     with pytest.raises(ValueError):
         AIConfig(**kwargs)
 
+def test_conversation_persistence_config_v16():
+    assert AIConfig(conversation_persistence=True).conversation_persistence
+    assert not AIConfig().conversation_persistence
 
 def test_private_separate_preferences(tmp_path):
     path = tmp_path / 'ai.toml'
@@ -193,7 +206,7 @@ def test_streaming_and_unverified_label():
 def test_catalogue_closed_and_registry_help():
     from jarvis.registry import COMMANDS, help_text, resolve
     assert len(build_catalogue()) == 17
-    assert len(COMMANDS) == 85
+    assert len(COMMANDS) == 92
     for text in ['parle avec Jarvis', 'ouvre assistant', 'état IA', 'modèle IA', 'efface conversation',
                  'arrête génération', 'active IA', 'désactive IA', 'confirme action IA 1234abcd']:
         assert resolve(text).command.id.startswith('ai.')

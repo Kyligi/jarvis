@@ -6,7 +6,7 @@ import threading
 import sqlite3
 import time
 from dataclasses import dataclass
-
+from dataclasses import replace
 from .backend import AIError, Cancelled, OllamaBackend, decode
 from .config import AIConfig
 
@@ -56,9 +56,10 @@ class Conversation:
         listener=lambda event: None,
         clock=time.monotonic,
         memory_service=None,
-	conversation_service=None,
-	conversation_id=None,
-        persist_conversations=False,
+    conversation_service=None,
+    conversation_id=None,
+	persist_conversations=None,
+	persistence_saver=None,
     ):
         self.config = config or AIConfig()
         self.backend = backend or OllamaBackend()
@@ -72,8 +73,15 @@ class Conversation:
         self.memory_service = memory_service
         self.conversation_service = conversation_service
         self.conversation_id = conversation_id
-        self.persist_conversations = persist_conversations
+        self.persist_conversations = (
+        self.config.conversation_persistence
+            if persist_conversations is None
+            else persist_conversations
+        )
+        self.persistence_saver = persistence_saver
         self.pending = None
+        self.pending_deletion = None
+        self.pending_memory_deletion = None
         self.cancelled = threading.Event()
         self.lock = threading.RLock()
         self.turn_lock = threading.Lock()
@@ -119,10 +127,11 @@ class Conversation:
                                         'items': {'oneOf': variants}}})
 
 
-    def set_conversation_persistence(self, enabled: bool):
-        """Active ou désactive l'enregistrement des échanges."""
 
-        if not isinstance(enabled, bool):
+    def set_conversation_persistence(self, enabled: bool):
+        """Modifie et, si configuré, sauvegarde la préférence."""
+
+        if type(enabled) is not bool:
             raise ValueError("L'état doit être un booléen.")
 
         if not self.turn_lock.acquire(blocking=False):
@@ -132,7 +141,18 @@ class Conversation:
             )
 
         try:
+            updated_config = replace(
+                self.config,
+                conversation_persistence=enabled,
+            )
+
+            # Enregistrer d'abord la préférence.
+            # En cas d'échec, conserver l'ancien état.
+            if self.persistence_saver is not None:
+                self.persistence_saver(updated_config)
+
             with self.lock:
+                self.config = updated_config
                 self.persist_conversations = enabled
 
             return enabled
@@ -255,6 +275,166 @@ class Conversation:
             assistant_text,
         )
 
+
+    def request_delete_conversation(self, conversation_id: int) -> str:
+        """Prépare une suppression sans toucher immédiatement à SQLite."""
+
+        if not self.turn_lock.acquire(blocking=False):
+            raise AIError("Une génération IA est en cours.")
+
+        try:
+            store = self.conversation_service
+
+            if store is None or not store.enabled:
+                return "Stockage des conversations indisponible."
+
+            if conversation_id <= 0:
+                return "Identifiant de conversation invalide."
+
+            if store.get_conversation(conversation_id) is None:
+                return "Conversation introuvable."
+
+            token = secrets.token_hex(4)
+            expires = self.clock() + 60
+
+            with self.lock:
+                self.pending_deletion = (
+                    token,
+                    conversation_id,
+                    expires,
+                )
+
+            return (
+                f"Suppression de la conversation n° {conversation_id} demandée.\n"
+                "Cette opération est définitive.\n"
+                "Pour confirmer dans les 60 secondes :\n"
+                f"confirme suppression conversation {token}"
+            )
+        finally:
+            self.turn_lock.release()
+
+    def confirm_delete_conversation(self, token: str) -> str:
+        """Confirme une suppression avec un code à usage unique."""
+
+        if not self.turn_lock.acquire(blocking=False):
+            raise AIError("Une génération IA est en cours.")
+
+        try:
+            with self.lock:
+                pending = self.pending_deletion
+
+                # Consommer la demande, même en cas de mauvais code.
+                self.pending_deletion = None
+
+            if pending is None:
+                return "Aucune suppression en attente."
+
+            expected, conversation_id, expires = pending
+
+            if (
+                not secrets.compare_digest(token, expected)
+                or self.clock() >= expires
+            ):
+                return "Code invalide ou expiré. Suppression annulée."
+
+            store = self.conversation_service
+
+            if store is None or not store.enabled:
+                return "Stockage des conversations indisponible."
+
+            deleted = store.delete_conversation(conversation_id)
+
+            if not deleted:
+                return "Conversation introuvable. Rien n'a été supprimé."
+
+            with self.lock:
+                if self.conversation_id == conversation_id:
+                    self.conversation_id = None
+                    self.history.clear()
+                    self.pending = None
+
+            return f"Conversation n° {conversation_id} supprimée."
+
+        finally:
+            self.turn_lock.release()
+
+    def request_delete_memory(self, memory_id: int) -> str:
+        """Demande une confirmation avant d'effacer un souvenir."""
+
+        if not self.turn_lock.acquire(blocking=False):
+            raise AIError("Une génération IA est en cours.")
+
+        try:
+            service = self.memory_service
+
+            if service is None:
+                return "Service de mémoire indisponible."
+
+            if memory_id <= 0:
+                return "Identifiant de souvenir invalide."
+
+            memory = service.get_memory(memory_id)
+
+            if memory is None:
+                return "Souvenir introuvable."
+
+            token = secrets.token_hex(4)
+
+            with self.lock:
+                self.pending_memory_deletion = (
+                    token,
+                    memory_id,
+                    self.clock() + 60,
+                )
+
+            return (
+                f"Suppression du souvenir n° {memory_id} demandée.\n"
+                f"Contenu : {memory.content}\n"
+                "Cette suppression est définitive.\n"
+                "Pour confirmer dans les 60 secondes :\n"
+                f"confirme oubli {token}"
+            )
+
+        finally:
+            self.turn_lock.release()
+
+    def confirm_delete_memory(self, token: str) -> str:
+        """Supprime un souvenir après confirmation à usage unique."""
+
+        if not self.turn_lock.acquire(blocking=False):
+            raise AIError("Une génération IA est en cours.")
+
+        try:
+            with self.lock:
+                pending = self.pending_memory_deletion
+                self.pending_memory_deletion = None
+
+            if pending is None:
+                return "Aucun oubli en attente."
+
+            expected, memory_id, expires = pending
+
+            if (
+                not secrets.compare_digest(token, expected)
+                or self.clock() >= expires
+            ):
+                return "Code invalide ou expiré. Souvenir conservé."
+
+            service = self.memory_service
+
+            if service is None:
+                return "Service de mémoire indisponible."
+
+            deleted = service.delete_memory(memory_id)
+
+            if not deleted:
+                return "Souvenir introuvable. Rien n'a été supprimé."
+
+            return f"Souvenir n° {memory_id} supprimé."
+
+        finally:
+            self.turn_lock.release()
+
     def memory_context(self, text: str, max_bytes: int) -> str:
         """Prépare un contexte mémoire borné et non exécutable."""
 
@@ -305,7 +485,7 @@ class Conversation:
         descriptions = [{'id': t.id, 'description': t.description, 'arguments': t.schema,
                          'confirmation': t.confirmation} for t in self.tools.values()]
         system = ('Tu es Jarvis, assistant local francophone. Réponds uniquement selon le schéma JSON. '
-		'Pour obtenir des données actuelles du PC, de Git, des fenêtres ou des projets '
+        'Pour obtenir des données actuelles du PC, de Git, des fenêtres ou des projets '
 'gérés localement, utilise les outils autorisés. '
 'Pour les préférences, les souvenirs personnels et les informations déjà présentes '
 'dans le contexte mémoire, réponds directement sans outil système, '

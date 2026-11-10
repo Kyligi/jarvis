@@ -1,4 +1,4 @@
-"""Configuration IA indépendante ; aucune conversation sur disque."""
+"""Configuration de l'IA locale et de la persistance facultative."""
 import ipaddress
 import json
 import math
@@ -54,8 +54,6 @@ class AIConfig:
         for key in ('enabled', 'conversation_persistence', 'streaming_enabled', 'retain_context'):
             if type(getattr(self, key)) is not bool:
                 raise ValueError(f'{key} : booléen requis.')
-        if self.conversation_persistence:
-            raise ValueError('Persistance des conversations indisponible en V1.5.')
         for key, low, high in [('context_limit', 4096, 32768), ('max_output_tokens', 128, 2048),
                                ('tool_call_limit', 1, 4), ('keep_alive', 0, 300)]:
             value = getattr(self, key)

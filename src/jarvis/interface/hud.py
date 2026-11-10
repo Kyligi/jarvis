@@ -27,7 +27,8 @@ from jarvis.interface.pages.settings import SettingsPage
 from jarvis.interface.pages.system import SystemPage
 from jarvis.interface.pages.windows import WindowsPage
 from jarvis.interface.voice import VoiceControls, VoicePage
-
+from jarvis.interface.pages.memory import MemoryPage
+from jarvis.interface.pages.conversations import ConversationsPage
 
 class HudWindow(QMainWindow):
     def __init__(self, context, mini=None):
@@ -53,7 +54,20 @@ class HudWindow(QMainWindow):
         self.navigation.setObjectName("navigation")
         self.navigation.setAccessibleName("Navigation du HUD")
         self.navigation.setFixedWidth(185)
-        self.navigation.addItems(["01   Accueil", "02   Système", "03   Projets", "04   Sessions", "05   Modes", "06   Paramètres", "07   Fenêtres", "08   Scénarios", "09   Voix", "10   Assistant"])
+        self.navigation.addItems([
+            "01   Accueil",
+            "02   Système",
+            "03   Projets",
+            "04   Sessions",
+            "05   Modes",
+            "06   Paramètres",
+            "07   Fenêtres",
+            "08   Scénarios",
+            "09   Voix",
+            "10   Assistant",
+            "11   Mémoire",
+            "12   Conversations",
+        ])
         sidebar.addWidget(self.navigation, 1)
         mini_button = QPushButton("Retour à Mini")
         mini_button.clicked.connect(self.show_mini)
@@ -69,8 +83,20 @@ class HudWindow(QMainWindow):
         self.voice_controls = VoiceControls(context.voice)
         content.addWidget(self.voice_controls)
         self.stack = QStackedWidget()
-        self.pages = [HomePage(context), SystemPage(context), ProjectsPage(context),
-                      SessionsPage(context), ModesPage(context), SettingsPage(context), WindowsPage(context), ScenariosPage(context), VoicePage(context), AssistantPage(context)]
+        self.pages = [
+            HomePage(context),
+            SystemPage(context),
+            ProjectsPage(context),
+            SessionsPage(context),
+            ModesPage(context),
+            SettingsPage(context),
+            WindowsPage(context),
+            ScenariosPage(context),
+            VoicePage(context),
+            AssistantPage(context),
+            MemoryPage(context),
+            ConversationsPage(context),
+        ]
         for page in self.pages:
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)

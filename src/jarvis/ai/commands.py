@@ -17,6 +17,94 @@ def route(session, text, executor):
         return executor(text)
     action = identifier[3:]
 
+    if action == "memory.delete":
+        memory_id = int(resolved.arguments[0])
+        return session.request_delete_memory(memory_id)
+
+    if action == "memory.delete_confirm":
+        token = resolved.arguments[0]
+        return session.confirm_delete_memory(token)
+    # V1.6 — Souvenirs personnels
+
+    if action == "memory.add":
+        service = session.memory_service
+
+        if service is None:
+            return "Service de mémoire indisponible."
+
+        content = resolved.arguments[0]
+
+        memory = service.add_memory(
+            content,
+            category="general",
+            source="explicit",
+        )
+
+        return (
+            f"Souvenir n° {memory.id} enregistré.\n"
+            f"Contenu : {memory.content}"
+        )
+
+    if action == "memory.list":
+        service = session.memory_service
+
+        if service is None:
+            return "Service de mémoire indisponible."
+
+        memories = service.list_memories()
+
+        if not memories:
+            return "Aucun souvenir personnel enregistré."
+
+        lines = ["SOUVENIRS PERSONNELS"]
+
+        for memory in memories[:30]:
+            lines.append(
+                f"• {memory.id} [{memory.category}] "
+                f"{memory.content}"
+            )
+
+        if len(memories) > 30:
+            lines.append(
+                f"… {len(memories) - 30} autres souvenirs."
+            )
+
+        return "\n".join(lines)
+
+    if action == "memory.search":
+        service = session.memory_service
+
+        if service is None:
+            return "Service de mémoire indisponible."
+
+        query = resolved.arguments[0].strip()
+
+        if not query:
+            return "Indique un texte à rechercher."
+
+        memories = service.search_memories(query, limit=10)
+
+        if not memories:
+            return f"Aucun souvenir trouvé pour : {query}"
+
+        lines = [f"RÉSULTATS DE RECHERCHE : {query}"]
+
+        for memory in memories:
+            lines.append(
+                f"• {memory.id} [{memory.category}] "
+                f"{memory.content}"
+            )
+
+        return "\n".join(lines)
+
+    if action == "history.delete":
+        conversation_id = int(resolved.arguments[0])
+        return session.request_delete_conversation(conversation_id)
+
+    if action == "history.delete_confirm":
+        token = resolved.arguments[0]
+        return session.confirm_delete_conversation(token)
+
     # ==========================================
     # V1.6 — HISTORIQUE CONVERSATIONNEL
     # ==========================================

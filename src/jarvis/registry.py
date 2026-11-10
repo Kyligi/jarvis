@@ -43,6 +43,8 @@ class Command:
         # Extraire les arguments depuis l'original : casse et accents conservés.
         if self.parameter == "objective":
             return (raw.split(":", 1)[1].strip(),)
+        if self.parameter == "memory_content":
+            return (raw.split(":", 1)[1].strip(),)
         if self.parameter == "file":
             return (re.split(r"\s+", raw, maxsplit=3)[3],)
         if self.parameter == "project":
@@ -186,6 +188,75 @@ COMMANDS = (
           ("wake_on", "active le mot d'activation", "Afficher la disponibilité du wake word expérimental"),
           ("wake_off", "désactive le mot d'activation", "Maintenir la détection continue désactivée"),
       )),
+
+
+    # V1.6 — Souvenirs personnels
+    Command(
+        "ai.memory.add",
+        "souviens-toi : TEXTE",
+        "Enregistrer explicitement un souvenir personnel",
+        ("souviens-toi : Je préfère Rust",),
+        lambda content: ai.request("memory.add", content),
+        "Mémoire",
+        pattern=r"souviens(?:-|\s)toi\s*:\s*.+",
+        parameter="memory_content",
+    ),
+    exact(
+        "ai.memory.list",
+        "mes souvenirs",
+        "Afficher les souvenirs personnels enregistrés",
+        ("mes souvenirs", "liste souvenirs"),
+        lambda: ai.request("memory.list"),
+        "Mémoire",
+    ),
+
+    Command(
+        "ai.memory.search",
+        "recherche souvenir TEXTE",
+        "Rechercher dans les souvenirs personnels avec FTS5",
+        ("recherche souvenir Rust",),
+        lambda query: ai.request("memory.search", query),
+        "Mémoire",
+        pattern=r"recherche souvenir (.+)",
+    ),
+
+    Command(
+        "ai.memory.delete",
+        "oublie souvenir N",
+        "Demander la suppression d'un souvenir personnel",
+        ("oublie souvenir 4",),
+        lambda number: ai.request("memory.delete", number),
+        "Mémoire",
+        pattern=r"oublie souvenir ([0-9]+)",
+    ),
+    Command(
+        "ai.memory.delete_confirm",
+        "confirme oubli CODE",
+        "Confirmer la suppression définitive d'un souvenir",
+        ("confirme oubli a1b2c3d4",),
+        lambda token: ai.request("memory.delete_confirm", token),
+        "Mémoire",
+        pattern=r"confirme oubli ([0-9a-f]{8})",
+    ),
+
+    Command(
+        "ai.history.delete",
+        "supprime conversation N",
+        "Préparer une suppression avec confirmation obligatoire",
+        ("supprime conversation 3",),
+        lambda number: ai.request("history.delete", number),
+        "Assistant local",
+        pattern=r"supprime conversation ([0-9]+)",
+    ),
+    Command(
+        "ai.history.delete_confirm",
+        "confirme suppression conversation CODE",
+        "Confirmer une suppression dans les 60 secondes",
+        ("confirme suppression conversation a1b2c3d4",),
+        lambda token: ai.request("history.delete_confirm", token),
+        "Assistant local",
+        pattern=r"confirme suppression conversation ([0-9a-f]{8})",
+    ),
 
     # V1.6 — Historique des conversations IA
     exact(
