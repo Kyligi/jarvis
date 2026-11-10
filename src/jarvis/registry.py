@@ -186,6 +186,58 @@ COMMANDS = (
           ("wake_on", "active le mot d'activation", "Afficher la disponibilité du wake word expérimental"),
           ("wake_off", "désactive le mot d'activation", "Maintenir la détection continue désactivée"),
       )),
+
+    # V1.6 — Historique des conversations IA
+    exact(
+        "ai.history.enable",
+        "active historique IA",
+        "Autoriser la sauvegarde locale des échanges conversationnels",
+        ("active historique IA",),
+        lambda: ai.request("history.enable"),
+        "Assistant local",
+    ),
+    exact(
+        "ai.history.disable",
+        "désactive historique IA",
+        "Arrêter l'enregistrement sans supprimer les conversations",
+        ("désactive historique IA",),
+        lambda: ai.request("history.disable"),
+        "Assistant local",
+    ),
+    exact(
+        "ai.history.status",
+        "état historique IA",
+        "Afficher l'état de la sauvegarde et la conversation actuelle",
+        ("état historique IA",),
+        lambda: ai.request("history.status"),
+        "Assistant local",
+    ),
+    exact(
+        "ai.history.new",
+        "nouvelle conversation",
+        "Créer une nouvelle conversation persistante",
+        ("nouvelle conversation",),
+        lambda: ai.request("history.new"),
+        "Assistant local",
+    ),
+    exact(
+        "ai.history.list",
+        "liste conversations",
+        "Afficher les conversations enregistrées localement",
+        ("liste conversations", "mes conversations"),
+        lambda: ai.request("history.list"),
+        "Assistant local",
+    ),
+    Command(
+        "ai.history.resume",
+        "reprends conversation N",
+        "Reprendre une conversation enregistrée par son identifiant",
+        ("reprends conversation 3",),
+        lambda number: ai.request("history.resume", number),
+        "Assistant local",
+        pattern=r"reprends conversation ([0-9]+)",
+    ),
+
     *(exact(f"ai.{action}", name, description, (name,),
             lambda action=action: ai.request(action), "Assistant local")
       for action, name, description in (

@@ -193,13 +193,24 @@ def test_streaming_and_unverified_label():
 def test_catalogue_closed_and_registry_help():
     from jarvis.registry import COMMANDS, help_text, resolve
     assert len(build_catalogue()) == 17
-    assert len(COMMANDS) == 79
+    assert len(COMMANDS) == 85
     for text in ['parle avec Jarvis', 'ouvre assistant', 'état IA', 'modèle IA', 'efface conversation',
                  'arrête génération', 'active IA', 'désactive IA', 'confirme action IA 1234abcd']:
         assert resolve(text).command.id.startswith('ai.')
     assert 'confirme action IA CODE' in help_text()
     assert not any(name in build_catalogue() for name in ('run_shell', 'execute_python', 'sudo', 'eval'))
-
+    for command in (
+        "active historique IA",
+        "désactive historique IA",
+        "état historique IA",
+        "nouvelle conversation",
+        "liste conversations",
+        "reprends conversation 3",
+    ):
+        resolved = resolve(command)
+        assert resolved is not None
+        assert resolved.command.id.startswith("ai.history.")
+        assert command in help_text() or command == "reprends conversation 3"
 
 def test_disabled_backend_never_called():
     s = session()

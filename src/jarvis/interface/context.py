@@ -12,7 +12,8 @@ from jarvis.interface.workers import Runner
 from jarvis.monitoring.collector import Collector
 from jarvis.registry import resolve
 from jarvis.services.overview import OverviewService
-
+from jarvis.memory.service import MemoryService
+from jarvis.memory.conversation_service import ConversationService
 
 class MonitorHub(QObject):
     updated = Signal(object)
@@ -72,7 +73,15 @@ class CommandBus(QObject):
         except (OSError, ValueError, TypeError, KeyError):
             configuration = ai_config.AIConfig()
             self.ai_warning = 'Configuration IA invalide : fichier conservé ; IA désactivée.'
-        self.conversation = Conversation(configuration, listener=self.ai_event.emit)
+        self.memory_service = MemoryService()
+        self.conversation_store = ConversationService()
+
+        self.conversation = Conversation(
+            configuration,
+            listener=self.ai_event.emit,
+            memory_service=self.memory_service,
+            conversation_service=self.conversation_store,
+        )
         self.inference_available = lambda: True
         self.runner = Runner(self)
         self.runner.result.connect(self.receive_result)

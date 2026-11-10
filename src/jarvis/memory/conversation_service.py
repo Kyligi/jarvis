@@ -1,6 +1,6 @@
 
 """Gestion des conversations persistantes de Jarvis V1.6."""
-
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -212,6 +212,56 @@ class ConversationService:
             ).fetchone()
 
         return self._message(row)
+
+
+    def add_turn(
+        self,
+        conversation_id: int,
+        user_text: str,
+        assistant_text: str,
+    ) -> bool:
+        """Enregistre un échange complet dans une seule transaction."""
+
+        if not self.enabled:
+            return False
+
+        user_text = self._validate_text(user_text, 20000)
+        assistant_text = self._validate_text(assistant_text, 20000)
+
+        now = utc_now()
+
+        with connect(self.db_path) as con:
+            exists = con.execute(
+                "SELECT 1 FROM conversations WHERE id = ?",
+                (conversation_id,),
+            ).fetchone()
+
+            if exists is None:
+                raise ValueError("Conversation inexistante.")
+
+            con.executemany(
+                """
+                INSERT INTO messages(
+                    conversation_id, role, content, created_at
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (conversation_id, "user", user_text, now),
+                    (conversation_id, "assistant", assistant_text, now),
+                ],
+            )
+
+            con.execute(
+                """
+                UPDATE conversations
+                SET updated_at = ?
+                WHERE id = ?
+                """,
+                (now, conversation_id),
+            )
+
+        return True
 
     def get_messages(
         self, conversation_id: int
