@@ -31,3 +31,9 @@ accélération LLM. Aucune installation, modification système ou capture micro.
 Plan : backend et session indépendants de Qt ; catalogue typé et permissions ;
 page Assistant et raccordement vocal ; validation automatisée et documentation.
 Documentation officielle Ollama API vérifiée via Context7 et docs.ollama.com.
+
+
+Contrôle matériel supplémentaire en lecture seule hors bac à sable :
+`vulkaninfo --summary` réussit. AMD Radeon 860M Graphics (RADV KRACKAN1),
+Mesa 26.2.5-arch1.1, API GPU 1.4.354, instance 1.4.363. L’échec initial était
+lié à l’environnement restreint ; aucune inférence Ollama ni preuve Vulkan Ollama.

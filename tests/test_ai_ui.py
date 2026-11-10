@@ -153,3 +153,29 @@ def test_ai_preferences_dont_touch_voice_or_ui(ai_ui, qapp, tmp_path):
     assert not (tmp_path / 'voice.toml').exists()
     assert not (tmp_path / 'ui.toml').exists()
     assert not context.commands.conversation.config.retain_context
+
+
+def test_late_reply_after_clear_is_discarded(ai_ui, qapp):
+    from jarvis.interface.context import ConversationReply
+    context, mini, page = ai_ui
+    cancellation = context.commands.conversation.cancelled
+    context.commands.submit('efface conversation')
+    context.commands.receive_result(ConversationReply('secret ancien résultat', cancellation))
+    context.commands.ai_event.emit({'kind': 'progress', 'text': 'secret ancien brouillon', 'characters': 20, 'cancelled': cancellation})
+    qapp.processEvents()
+    assert 'secret' not in page.output.toPlainText()
+    assert 'secret' not in mini.output.toPlainText()
+    assert 'secret' not in page.progress.text()
+
+
+@pytest.mark.parametrize('text', ['confirme action IA 1234abcd.', 'confirme scénario 1234abcd!', 'confirme disposition 1234abcd?'])
+def test_punctuated_voice_confirmation_still_refused(ai_ui, text):
+    context, _, _ = ai_ui
+    c = context.voice.controller
+    c.config = replace(c.config, enabled=True)
+    c.capture = Mock(capture=Mock(return_value=b'\0\1'))
+    c.stt = Mock(transcribe=Mock(return_value=Transcript(text, .99)))
+    context.voice.toggle()
+    c.thread.join(2)
+    assert c.snapshot.state == State.ERROR
+    assert c.pending is None

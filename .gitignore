@@ -56,3 +56,8 @@ voice-corpus/
 
 # Machine-local Whisper Vulkan build and models
 .local/
+
+# Local LLM weights, caches and private conversations
+*.gguf
+.ollama/
+ai-conversations/

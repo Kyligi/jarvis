@@ -1,4 +1,38 @@
-# Architecture V1.4
+# Architecture V1.5
+
+## Extension conversationnelle locale
+
+`CommandBus` garde son unique Runner et son exécuteur historique. Il résout d’abord
+le registre ; les commandes reconnues utilisent `core.commands.execute`, les
+commandes IA pilotent sa session, et les formulations libres utilisent
+`ai.conversation.Conversation`. Les neuf pages historiques gardent leurs indices ;
+`interface/pages/assistant.py` occupe l’indice 9. Mini et HUD partagent cette session.
+
+Le package `ai` est indépendant de Qt : configuration privée séparée, interface
+Backend, transport Ollama local borné, catalogue de 17 Tool, historique en mémoire,
+schéma strict, propositions et confirmations uniques expirantes. Aucun accès
+système générique n’est exposé. Les handlers réutilisent les services ci-dessous.
+Les codes de confirmation ne sont ni des outils ni des messages envoyés au modèle.
+
+Les réponses de services sont rendues telles quelles avec provenance et ne sont
+jamais réinjectées au modèle. Le contexte garde six échanges au plus, dans un
+budget UTF-8 conservateur réservé dans num_ctx. Les sorties libres restent marquées
+non vérifiées. Les signaux Qt transportent progression et résultats, avec un jeton
+d’annulation pour ignorer les réponses tardives après effacement.
+
+Le pipeline vocal reste unique : Whisper CLI finit avant la validation visible ;
+la transcription validée entre dans le même bus. Une formulation libre n’est
+proposée que si l’IA est active ; une confirmation sensible exige toujours une
+saisie console. Piper garde sa limite de lecture courte. L’IA refuse de démarrer
+pendant la capture, la transcription ou la synthèse ; keep_alive=0 par défaut.
+
+Arrêter IA ferme la requête HTTP et invalide les propositions, sans tuer les services
+ni annuler les actions déjà commencées. Les budgets d’outils signalent les dépassements
+au retour ; l’annulation de scénarios reste coopérative et séparée. Voir
+[AI_V1_5.md](AI_V1_5.md) pour le protocole, les limites et la recette complète.
+
+## Architecture historique conservée
+
 
 ## Deux fenêtres et un contexte partagé
 
@@ -15,7 +49,7 @@ HudWindow (classe jarvis-hud) ────┘    ├─ CommandBus → Runner �
 
 Les deux fenêtres utilisent Qt Widgets et le thème central `interface/theme.py`.
 `interface/components.py` fournit les cartes, labels en texte brut et la console.
-Les huit pages sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
+Les pages historiques sont dans `interface/pages/` ; elles ne contiennent ni SQL, ni Git,
 ni dispatcher Hyprland. `services/overview.py` réutilise les services métier et
 assemble les lectures nécessaires à la présentation.
 

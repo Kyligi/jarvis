@@ -212,3 +212,21 @@ ici**, faute de modèle : seuls le texte et le générateur sont livrés.
 - [ ] Fermer pendant capture/STT/TTS, vérifier absence de processus et de temporaires.
 - [ ] Redémarrer : préférences conservées, aucun microphone ouvert ; réseau déconnecté,
   toutes les étapes vocales doivent encore fonctionner avec les modèles installés.
+
+
+## Raccordement V1.5
+
+La page Assistant et `active IA` permettent d’interpréter les formulations libres.
+Le contrôleur accepte alors une transcription inconnue du registre **en attente de
+validation visible**, jamais directement en exécution. Après validation, le bus
+choisit le registre prioritaire ou le moteur conversationnel. L’action éventuellement
+proposée exige encore une confirmation IA, puis les confirmations historiques.
+`confirme action IA CODE` est refusé à la voix comme les codes de scénarios et de
+dispositions. IA inactive : le comportement V1.4.2 des commandes inconnues demeure.
+
+Aucun second microphone ni moteur Piper. L’inférence IA et la capture/transcription/
+synthèse ne démarrent pas simultanément dans le flux partagé. Résidence Ollama 0 par
+défaut ; aucun modèle externe fermé de force. Texte intégral affiché, réponse vocale
+courte ou message neutre existant, conservation du bouton de désactivation et des
+timeouts. Voir [AI_V1_5.md](AI_V1_5.md). Les performances voix→LLM n’ont pas été
+mesurées faute d’Ollama installé ; les mesures Whisper antérieures restent distinctes.

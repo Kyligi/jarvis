@@ -1,9 +1,28 @@
+# Livraison V1.5 — 10 novembre 2026
+
+- Implémenté : adaptateur Ollama loopback, JSON strict, streaming, arrêt et timeout.
+- Implémenté : 17 outils métier, provenance, confirmation IA puis validations historiques.
+- Implémenté : mémoire limitée à la session et effacement, sans persistance.
+- Implémenté : Assistant dixième page Nebula, Mini conservée, pipeline vocal partagé.
+- Livré : tests simulés, intégration Ollama et benchmark facultatifs, documentation.
+- À valider après installation volontaire : qualité française qwen3:4b, accélération
+  effective Ollama/Vulkan, latences et contention mémoire avec Whisper.
+- Non commencé : mémoire personnelle V1.6, recherche V1.7, Spotify V1.9, domotique
+  V1.10, téléphone V1.11, automatisations proactives V1.12.
+
+La disponibilité matérielle Vulkan a été vérifiée ; aucun modèle LLM installé.
+Voir [V1.5](AI_V1_5.md) et [validation](VALIDATION.md).
+
+---
+
 # Roadmap J.A.R.V.I.S. V1.0–V2.0
 
 Les versions suivent l’ordre ci-dessous : V1.10 vient après V1.9.
 V1.0, V1.1 et V1.2 sont déclarées validées manuellement par l’utilisateur.
 V1.3 est implémentée et testée automatiquement ; sa recette native reste à faire.
-V1.4–V2.0 restent des objectifs. Aucune fonctionnalité V1.4 n’est commencée.
+V1.4.2 est livrée et fonctionnelle selon le contexte utilisateur. V1.5 est
+implémentée et validée automatiquement ; sa recette LLM réelle reste à faire.
+V1.6–V2.0 restent des objectifs.
 
 | Version | Objectif | Critères d'acceptation |
 | --- | --- | --- |
@@ -31,7 +50,7 @@ lancement de cette mission. Les tests hors écran V1.3 et la revue des captures 
 remplacent pas les vérifications du raccourci, des fenêtres, des applications et
 des sessions sur le bureau Omarchy. Suivre [VALIDATION.md](VALIDATION.md).
 
-## V1.4 — implémentation vocale locale (9 novembre 2026)
+## Historique V1.4 — implémentation vocale locale (9 novembre 2026)
 
 - Livré : adaptateurs PipeWire/whisper.cpp CPU/Piper OHF, service sans Qt,
   états, annulation, transcription et validation visible, registre commun,
@@ -43,4 +62,6 @@ des sessions sur le bureau Omarchy. Suivre [VALIDATION.md](VALIDATION.md).
 - Non livré : écoute continue openWakeWord, hold-to-talk, accélération Vulkan,
   réutilisation du modèle chargé, corpus WAV déjà généré. Ces points ne sont pas
   marqués terminés. Le guide VOICE décrit les raisons et la recette.
-- V1.5 non commencée : aucune intégration LLM ou conversation générale.
+- À cette étape V1.4, V1.5 n’était pas commencée. Elle est maintenant livrée
+  logiciellement selon le bilan en tête de cette page ; Vulkan Whisper a été
+  livré entre-temps en V1.4.2 (voir VOICE_V1_4_2.md).

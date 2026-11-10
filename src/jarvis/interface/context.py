@@ -1,5 +1,6 @@
 """Services de présentation partagés par Mini et HUD dans un seul processus."""
 from collections import deque
+from dataclasses import dataclass
 import logging
 from PySide6.QtCore import QObject, QTimer, Signal, Slot
 from PySide6.QtWidgets import QApplication
@@ -43,6 +44,12 @@ class MonitorHub(QObject):
         self.runner.shutdown()
 
 
+@dataclass(frozen=True)
+class ConversationReply:
+    text: str
+    cancelled: object
+
+
 class CommandBus(QObject):
     result = Signal(object)
     busy_changed = Signal(bool)
@@ -66,7 +73,7 @@ class CommandBus(QObject):
         self.conversation = Conversation(configuration, listener=self.ai_event.emit)
         self.inference_available = lambda: True
         self.runner = Runner(self)
-        self.runner.result.connect(self.result)
+        self.runner.result.connect(self.receive_result)
         self.runner.failed.connect(self.failure)
         self.runner.idle.connect(self.finished)
         self.busy = False
@@ -94,7 +101,11 @@ class CommandBus(QObject):
         # Reserve the turn before launching the worker, so an immediate Stop cannot be lost.
         if resolved is None:
             self.conversation.prepare()
-        if not self.runner.start(lambda: route(self.conversation, text, self.executor)):
+        turn_cancelled = self.conversation.cancelled
+        def run():
+            value = route(self.conversation, text, self.executor)
+            return ConversationReply(value, turn_cancelled) if resolved is None else value
+        if not self.runner.start(run):
             return False
         identifier = resolved.command.id if resolved else "unknown"
         if identifier in {"modes.travail", "modes.gaming", "modes.etudes"}:
@@ -118,6 +129,12 @@ class CommandBus(QObject):
         self.busy_changed.emit(True)
         self.started.emit("windows.action")
         return True
+
+    @Slot(object)
+    def receive_result(self, result):
+        if isinstance(result, ConversationReply):
+            result = 'Génération annulée ; contenu de la session effacé ou interrompu.' if result.cancelled.is_set() else result.text
+        self.result.emit(result)
 
     @Slot(str)
     def failure(self, error):

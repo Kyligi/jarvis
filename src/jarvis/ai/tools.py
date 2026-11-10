@@ -54,9 +54,13 @@ def scenario_target(args):
 def mode_target(args):
     from jarvis.modes import profiles
     from jarvis.projects.manager import get_active_project
+    from jarvis.scenarios.engine import engine, format_preview
     profile = profiles.load()[args['name']]
+    scenario = profiles.scenario_for_mode(args['name'])
+    plan = format_preview(engine.preview(scenario))
     active = get_active_project()
-    return json.dumps(profile, ensure_ascii=False, sort_keys=True) + '\nProjet : ' + str(active)
+    return (json.dumps({'profile': profile, 'actions': scenario['actions']}, ensure_ascii=False, sort_keys=True)
+            + '\nProjet : ' + str(active) + '\n' + plan)
 
 
 def build_catalogue():

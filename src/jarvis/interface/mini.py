@@ -23,7 +23,8 @@ class JarvisWindow(QWidget):
         header = QHBoxLayout()
         title = QVBoxLayout()
         title.addWidget(label("J.A.R.V.I.S.", "subheading"))
-        title.addWidget(label("NEBULA / MINI", "eyebrow"))
+        self.ai_status = label('', 'eyebrow')
+        title.addWidget(self.ai_status)
         header.addLayout(title, 1)
         self.hud_button = QPushButton("Ouvrir le HUD  ↗")
         self.hud_button.setObjectName("primary")
@@ -37,9 +38,9 @@ class JarvisWindow(QWidget):
         layout.addWidget(self.voice_controls)
         self.console = CommandConsole(self.context.commands)
         layout.addWidget(self.console, 1)
-        self.ai_status = label('IA locale · ' + self.context.commands.conversation.config.model, 'muted')
-        layout.addWidget(self.ai_status)
         self.context.commands.ai_event.connect(self.ai_update)
+        self.context.commands.result.connect(lambda _: self.ai_update({'kind': 'idle'}))
+        self.ai_update({'kind': 'idle'})
         # Attributs de compatibilité utilisés par les tests et appelants V1.0.
         self.output = self.console.output
         self.command = self.console.command
@@ -51,10 +52,13 @@ class JarvisWindow(QWidget):
 
     @Slot(object)
     def ai_update(self, event):
+        if event.get('cancelled') and event['cancelled'].is_set() and event['kind'] not in ('cleared', 'stopped', 'idle'):
+            return
         if event['kind'] in ('waiting', 'progress'):
             self.ai_status.setText('IA locale · génération en cours…')
         elif event['kind'] in ('idle', 'stopped', 'cleared'):
-            self.ai_status.setText('IA locale · ' + self.context.commands.conversation.config.model)
+            config = self.context.commands.conversation.config
+            self.ai_status.setText('NEBULA / MINI · IA locale ' + (config.model if config.enabled else 'désactivée'))
 
     @Slot()
     def run_command(self):

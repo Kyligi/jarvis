@@ -205,3 +205,76 @@ def test_disabled_backend_never_called():
     s.config = AIConfig()
     assert 'désactivée' in s.respond('Bonjour')
     assert s.backend.messages == []
+
+
+def test_scenario_keeps_second_historical_confirmation(monkeypatch):
+    from jarvis.scenarios.engine import engine
+    from jarvis.scenarios.model import new_scenario, new_action
+    actions = Mock(check=Mock(return_value='OK'), execute=Mock(return_value='OK'))
+    monkeypatch.setattr(engine, 'actions', actions)
+    value = engine.store.save(new_scenario('Révisions', [new_action('move_window', target='Foot', workspace=3)]), create=True)
+    s = session(calls=[call('run_scenario', id=value['id'])])
+    assert 'Action proposée' in s.respond('Lance les révisions')
+    actions.execute.assert_not_called()
+    result = s.confirm(s.pending.token)
+    assert 'confirme scénario' in result
+    actions.execute.assert_not_called()
+    assert engine._approval is not None
+    assert 'success' in engine.confirm(engine._approval[0]) or engine.status()['state'] == 'success'
+    actions.execute.assert_called_once()
+
+
+def test_scenario_edit_invalidates_ai_approval(monkeypatch):
+    from jarvis.scenarios.engine import engine
+    from jarvis.scenarios.model import new_scenario
+    value = engine.store.save(new_scenario('Test', []), create=True)
+    s = session(calls=[call('run_scenario', id=value['id'])])
+    s.respond('Lance Test')
+    token = s.pending.token
+    engine.store.save(dict(value, name='Changé'))
+    assert 'modifiée' in s.confirm(token)
+    assert engine.status() is None
+
+
+def test_window_identity_change_refuses_action(monkeypatch):
+    from jarvis.services.windows import service, Window
+    window = Window('0x123', 'foot', 'terminal', 3, '3', 0, False, 123)
+    monkeypatch.setattr(service, 'windows', lambda: [window])
+    execute = Mock()
+    monkeypatch.setattr(service, 'act', execute)
+    s = session(calls=[call('focus_window', address='0x123')])
+    s.respond('Donne le focus')
+    token = s.pending.token
+    monkeypatch.setattr(service, 'windows', lambda: [replace(window, pid=456)])
+    assert 'modifiée' in s.confirm(token)
+    execute.assert_not_called()
+
+
+def test_followup_context_is_bounded_and_used():
+    s = session('Un projet Python')
+    s.respond('Nous parlons du projet Alpha')
+    s.respond('Quel langage ?')
+    assert any('projet Alpha' in row['content'] for row in s.backend.messages[-1])
+    s.config = replace(s.config, context_limit=8192)
+    s.history = [{'role': 'user', 'content': 'x' * 2000}] * 50
+    messages = s.context('Une suite')
+    assert sum(len(r['content'].encode()) for r in messages) < 8192
+
+
+def test_errors_do_not_log_conversation(caplog):
+    s = session()
+    s.backend.generate = Mock(side_effect=AIError('serveur absent'))
+    s.respond('secret-private-token')
+    assert 'secret-private-token' not in caplog.text
+    assert s.history == []
+
+
+def test_action_failure_does_not_claim_success():
+    handler = Mock(side_effect=OSError('private'))
+    tool = Tool('action', 'effet', object_schema({}), handler, 'test', 'action')
+    s = session(calls=[call('action')], catalogue={'action': tool})
+    s.respond('test')
+    token = s.pending.token
+    assert 'effets partiels possibles' in s.confirm(token)
+    assert 'invalide' in s.confirm(token)
+    handler.assert_called_once()

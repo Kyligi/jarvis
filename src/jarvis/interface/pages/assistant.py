@@ -138,6 +138,8 @@ class AssistantPage(QWidget):
 
     @Slot(object)
     def receive_event(self, event):
+        if event.get('cancelled') and event['cancelled'].is_set() and event['kind'] not in ('cleared', 'stopped', 'idle'):
+            return
         kind = event['kind']
         if kind == 'user':
             self.output.appendPlainText('Vous : ' + event['text'])

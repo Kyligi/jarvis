@@ -1,5 +1,5 @@
 """Session, routage et permissions ; aucune dépendance Qt ou persistance."""
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 import json
 import re
 import secrets
@@ -63,7 +63,7 @@ class Conversation:
         self.prepared = False
 
     def emit(self, kind, **data):
-        self.listener({'kind': kind, **data})
+        self.listener({'kind': kind, 'cancelled': self.cancelled, **data})
 
     def prepare(self):
         with self.lock:
@@ -219,7 +219,11 @@ class Conversation:
             return result
         except Cancelled:
             return 'Génération annulée. Aucune nouvelle action autorisée.'
-        except (AIError, ValueError, TypeError, KeyError, OSError, RuntimeError):
+        except AIError as error:
+            result = 'IA locale : ' + str(error)[:1000]
+            self.emit('answer', text=result)
+            return result
+        except (ValueError, TypeError, KeyError, OSError, RuntimeError):
             result = 'IA locale : réponse invalide, cible indisponible ou serveur/modèle absent. Vérifier « état IA » ; préciser la cible si nécessaire.'
             self.emit('answer', text=result)
             return result
@@ -230,7 +234,9 @@ class Conversation:
     def run_tool(self, tool, args):
         self.emit('tool', text=f'{tool.id} · source : {tool.source}')
         start = self.clock()
-        value = str(tool.handler(**args))[:16000]
+        value = str(tool.handler(**args))
+        if len(value) > 16000:
+            value = value[:12000] + '\n[… résultat abrégé ; consulter le service pour le détail …]\n' + value[-4000:]
         elapsed = self.clock() - start
         result = f'Source locale : {tool.source} [{tool.id}]\n{value}'
         if elapsed > tool.timeout:
@@ -249,9 +255,12 @@ class Conversation:
                 return 'Cible modifiée depuis la proposition ; recommencer.'
             if self.cancelled.is_set():
                 return 'Action annulée.'
-            return self.run_tool(tool, pending.arguments)
         except (ValueError, RuntimeError, OSError):
             return 'Action refusée : cible indisponible ou modifiée ; aucune répétition automatique.'
+        try:
+            return self.run_tool(tool, pending.arguments)
+        except (ValueError, RuntimeError, OSError):
+            return 'Action interrompue : effets partiels possibles. Vérifier le service ; aucune répétition automatique.'
 
     def status(self):
         try:

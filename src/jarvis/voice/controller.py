@@ -141,6 +141,9 @@ class VoiceController:
                 match = resolve(candidate)
                 if match and not match.arguments:
                     text, resolved = candidate, match
+            sensitive = resolve(text.rstrip(' .!?'))
+            if sensitive and sensitive.command.id in {'scenarios.confirm', 'windows.confirm', 'ai.confirm'}:
+                resolved = sensitive
             if test_only:
                 self.emit(State.IDLE, text=text, message=result.warning + ' Test uniquement : aucune exécution.')
             elif resolved is None and not self.allow_conversation():

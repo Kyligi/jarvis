@@ -72,6 +72,8 @@ class CommandConsole(QWidget):
 
     @Slot(object)
     def ai_changed(self, event):
+        if event.get('cancelled') and event['cancelled'].is_set() and event['kind'] not in ('cleared', 'stopped', 'idle'):
+            return
         if event['kind'] == 'cleared':
             self.output.clear()
             self.has_response = False

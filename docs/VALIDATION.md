@@ -364,3 +364,40 @@ Résultat automatisé V1.4.1 : **421 tests réussis** (384 conservés + 37 nouve
 Preuves, chemins, reproduction, mesures et limites : [rapport V1.4.2](VOICE_V1_4_2.md).
 Les constats « Vulkan reste à valider / aucun modèle téléchargé » de la section
 V1.4.1 décrivent l’ancienne livraison et sont remplacés par ce bilan V1.4.2.
+
+## V1.5 — validation du 10 novembre 2026
+
+Audit initial sur `96e4438` : **447 passed in 7.15s**, dépôt propre.
+Les tests historiques sont conservés ; les assertions de cardinalité reconnaissent
+maintenant les dix pages et vérifient séparément les 69 commandes antérieures.
+
+Validation complète après implémentation : **541 passed, 1 skipped in 10.53s**.
+Le test ignoré est l’intégration volontaire Ollama (`JARVIS_TEST_OLLAMA=1`).
+Aucune inférence réelle effectuée : Ollama absent, port 11434 inaccessible.
+
+- `uv lock --offline` : version jarvis 1.4.2 → 1.5.0, aucune nouvelle dépendance.
+- `uv sync --locked` : réussi, 14 paquets résolus, paquet local jarvis reconstruit.
+- `uv run python -m compileall -q src/jarvis` : réussi, aucune sortie.
+- `git diff --check` : réussi, aucune sortie.
+- `uv run python tools/ai_benchmark.py --help` : interface du benchmark vérifiée.
+- Aucun linter configuré ; exécutables ruff et mypy absents.
+
+Couverture ajoutée : endpoints privés, alias cloud refusés, détection du serveur et
+du modèle, HTTP simulé, streaming/non-streaming, délais et fermeture des sockets,
+annulation avant/durant génération, JSON et champs invalides, catalogue fermé,
+lecture réelle des services simulés/temporaires, priorité du registre, injection
+isolée des résultats, cibles absentes/ambiguës/modifiées, expiration et usage unique,
+seconde confirmation des scénarios, suivi/effacement/non-persistance, absence de
+logs de contenu, interface hors écran, arrêt Qt réactif, réponses tardives ignorées,
+préférences séparées et flux vocal simulé avec double validation.
+
+Rendu hors écran des dix pages et Mini effectué. Inspection visuelle de la page
+Assistant et Mini (captures temporaires pytest, non versionnées). Aucune fenêtre
+native ni workspace utilisateur modifié par les tests. La recette Wayland complète
+avec Ollama et voix réelle reste à réaliser selon [AI_V1_5.md](AI_V1_5.md).
+
+Diagnostic GPU en lecture seule : `vulkaninfo --summary` hors bac à sable réussit,
+Radeon 860M RADV, Mesa 26.2.5-arch1.1, API GPU 1.4.354. Le diagnostic restreint
+échouait à initialiser Vulkan. Ce résultat ne valide pas le backend Ollama/Vulkan.
+Temps de première réponse, génération, tokens/s, mémoire LLM, latence voix→LLM
+et contention Whisper/LLM : **non mesurés**, aucun résultat matériel inventé.

@@ -1,4 +1,13 @@
-# J.A.R.V.I.S. V1.4.2 — Whisper Turbo et Vulkan
+# J.A.R.V.I.S. V1.5 — Intelligence conversationnelle locale
+
+La V1.5 ajoute **Assistant**, dixième page du HUD : conversation française locale,
+streaming, 17 outils métier, sources locales et confirmations d’actions à usage unique.
+Les **69 commandes historiques sont conservées** ; l’aide en propose désormais 79.
+Le modèle conseillé est `qwen3:4b` via Ollama sur `127.0.0.1:11434`. L’IA est
+optionnelle et désactivée par défaut ; aucun serveur ni modèle n’est installé
+ou téléchargé automatiquement. Les conversations restent en mémoire de session.
+Voir [installation volontaire, sécurité, limites et recette V1.5](docs/AI_V1_5.md).
+**Ollama absent lors de la livraison : inférence et performances LLM non mesurées.**
 
 Assistant personnel Linux en Python/PySide6 pour Omarchy/Hyprland : commandes
 françaises, monitoring, projets Rust/Python, sessions et modes Travail/Gaming/Études.
@@ -86,7 +95,7 @@ permet de lui donner le focus, choisir sa destination, la rendre flottante ou
 mosaïque, ou la centrer. Les lectures et actions utilisent des workers ; Actualiser
 recharge l’inventaire. Une erreur efface la sélection et une cible fermée est refusée.
 Les boutons de disposition affichent un plan dans la console : y saisir le code de
-confirmation fourni. `aide` expose automatiquement les **69 commandes**.
+confirmation fourni. `aide` expose automatiquement les **79 commandes**.
 
 ### Préférences Nebula
 
@@ -195,7 +204,7 @@ est persistant : réactiver le même mode change de workspace sans relancer ses 
 conformément au comportement historique. Les profils personnalisés réappliquent leurs
 étapes avec la politique de réutilisation choisie à chaque activation.
 
-Pas d'IA, voix, Spotify, domotique ou autonomie dans cette version.
+Pas de Spotify, domotique ou autonomie dans cette version.
 Voir [ARCHITECTURE.md](docs/ARCHITECTURE.md) pour les responsabilités, la sécurité
 et les compromis de compatibilité.
 
@@ -249,4 +258,27 @@ Les paramètres vocaux sont séparés dans `data_dir/voice.toml`.
 Le raccourci optionnel `jarvis --voice-toggle` adresse le processus existant sans
 modifier le bureau. SUPER+SHIFT+V a été vérifié libre mais **n'a pas été installé**.
 Voir les [instructions, licences, limites et recette manuelle](docs/VOICE.md).
-Aucune fonction V1.5, IA conversationnelle, API distante ou téléchargement implicite.
+La V1.5 réutilise ce pipeline, y compris la validation visible, pour les demandes
+naturelles lorsque l’IA est activée. Une validation de transcription n’autorise
+pas l’action proposée : sa confirmation reste séparée. Aucune API distante ni
+téléchargement implicite.
+
+## Assistant local V1.5
+
+Dans Mini, saisir `ouvre assistant`, puis activer l’IA dans la page Assistant.
+Après installation volontaire d’Ollama et du modèle, « Affiche mes projets. »
+peut proposer `list_projects` ; Jarvis valide puis appelle son service existant.
+Les commandes reconnues restent prioritaires. Les actions affichent cible,
+conséquences et `confirme action IA CODE` (60 s, usage unique). Les déplacements
+par scénarios conservent leur code historique supplémentaire.
+
+`état IA`, `modèle IA`, `parle avec Jarvis`, `efface conversation`,
+`arrête génération`, `active IA`, `désactive IA` et `annule action IA` sont dans l’aide.
+Le bouton Arrêter IA reste accessible pendant l’inférence. Les préférences vont
+dans `data_dir/ai.toml`, séparées de `voice.toml` et `ui.toml` ;
+[exemple](docs/examples/ai.example.toml). Le texte fonctionne sans audio.
+
+Validation matérielle disponible : Radeon 860M, RADV/Mesa 26.2.5, Vulkan 1.4 sur
+l’hôte. Cela ne prouve pas l’utilisation de Vulkan par Ollama. Le benchmark
+facultatif `uv run python tools/ai_benchmark.py --run` ne télécharge rien et
+n’exécute aucun outil métier. Voir [les limites de validation](docs/VALIDATION.md).

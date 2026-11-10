@@ -1,0 +1,14 @@
+[ai]
+enabled = false
+backend = "ollama"
+model = "qwen3:4b"
+endpoint = "http://127.0.0.1:11434"
+temperature = 0.2
+context_limit = 8192
+max_output_tokens = 768
+request_timeout = 90.0
+tool_call_limit = 3
+conversation_persistence = false
+streaming_enabled = true
+retain_context = true
+keep_alive = 0
