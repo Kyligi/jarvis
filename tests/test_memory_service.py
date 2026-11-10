@@ -137,3 +137,105 @@ def test_schema_idempotent(tmp_path):
         ).fetchone()[0]
 
     assert count == 1
+
+# ==========================================
+# V1.6 — RECHERCHE DES SOUVENIRS
+# ==========================================
+
+
+def test_search_memories(memory_service):
+    memory_service.add_memory("Je programme en Rust")
+    memory_service.add_memory("Jarvis utilise Python")
+    memory_service.add_memory("Je joue au basket")
+
+    results = memory_service.search_memories("Rust")
+
+    assert len(results) == 1
+    assert results[0].content == "Je programme en Rust"
+
+
+def test_search_without_accents(memory_service):
+    memory_service.add_memory(
+        "Je préfère développer en Python"
+    )
+
+    results = memory_service.search_memories("prefere")
+
+    assert len(results) == 1
+    assert "préfère" in results[0].content
+
+
+def test_search_after_update(memory_service):
+    memory = memory_service.add_memory(
+        "Je développe en Python"
+    )
+
+    memory_service.update_memory(
+        memory.id, "Je développe en Rust"
+    )
+
+    assert memory_service.search_memories("Python") == []
+
+    results = memory_service.search_memories("Rust")
+    assert len(results) == 1
+    assert results[0].id == memory.id
+
+
+def test_search_after_delete(memory_service):
+    memory = memory_service.add_memory(
+        "Mon projet utilise Rust"
+    )
+
+    assert len(memory_service.search_memories("Rust")) == 1
+
+    memory_service.delete_memory(memory.id)
+
+    assert memory_service.search_memories("Rust") == []
+
+
+def test_search_limit(memory_service):
+    for index in range(10):
+        memory_service.add_memory(
+            f"Projet Python numéro {index}"
+        )
+
+    assert len(memory_service.search_memories("Python", 3)) == 3
+
+    with pytest.raises(ValueError):
+        memory_service.search_memories("Python", 0)
+
+    with pytest.raises(ValueError):
+        memory_service.search_memories("Python", 51)
+
+
+def test_search_empty_query(memory_service):
+    memory_service.add_memory("Je travaille avec Rust")
+
+    assert memory_service.search_memories("") == []
+    assert memory_service.search_memories("   ") == []
+    assert memory_service.search_memories("!!!") == []
+
+
+def test_search_fallback_without_fts(memory_service):
+    memory_service.add_memory(
+        "Je préfère programmer en Rust"
+    )
+
+    # Simule une base où FTS5 est indisponible.
+    # Le test utilise exclusivement une base temporaire.
+    with sqlite3.connect(memory_service.db_path) as con:
+        for trigger in (
+            "memories_fts_insert",
+            "memories_fts_update",
+            "memories_fts_delete",
+        ):
+            con.execute(f"DROP TRIGGER IF EXISTS {trigger}")
+
+        con.execute("DROP TABLE IF EXISTS memories_fts")
+
+    results = memory_service.search_memories("prefere")
+
+    assert len(results) == 1
+    assert results[0].content == (
+        "Je préfère programmer en Rust"
+    )
