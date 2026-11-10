@@ -10,6 +10,7 @@ from jarvis.projects import manager, sessions
 from jarvis.modes import manager as modes
 from jarvis.modules import projects as legacy_projects
 from jarvis.voice import commands as voice
+from jarvis.ai import commands as ai
 from jarvis import omarchy
 from jarvis.services import window_commands as windows
 from jarvis.scenarios import commands as scenarios
@@ -185,6 +186,22 @@ COMMANDS = (
           ("wake_on", "active le mot d'activation", "Afficher la disponibilité du wake word expérimental"),
           ("wake_off", "désactive le mot d'activation", "Maintenir la détection continue désactivée"),
       )),
+    *(exact(f"ai.{action}", name, description, (name,),
+            lambda action=action: ai.request(action), "Assistant local")
+      for action, name, description in (
+          ("talk", "parle avec Jarvis", "Ouvrir la conversation locale"),
+          ("open", "ouvre assistant", "Ouvrir la page Assistant"),
+          ("status", "état IA", "Détecter Ollama, modèle, CPU/GPU et mesures"),
+          ("model", "modèle IA", "Afficher le modèle sélectionné"),
+          ("clear", "efface conversation", "Effacer le contexte de session et les propositions"),
+          ("stop", "arrête génération", "Interrompre l'inférence locale"),
+          ("enable", "active IA", "Activer l'IA locale pour cette session"),
+          ("disable", "désactive IA", "Désactiver l'IA et effacer son contexte"),
+          ("cancel", "annule action IA", "Annuler la proposition IA en attente"),
+      )),
+    Command("ai.confirm", "confirme action IA CODE", "Autoriser une proposition exacte pendant 60 s, usage unique",
+            ("confirme action IA 1234abcd",), lambda token: ai.request("confirm", token),
+            "Assistant local", pattern=r"confirme action ia ([0-9a-f]{8})"),
 )
 
 
