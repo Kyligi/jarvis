@@ -230,7 +230,7 @@ def test_wake_gate_opt_in_false_positive_cooldown():
 
 def test_historical_commands_preserved():
     from jarvis.registry import COMMANDS, resolve, help_text
-    assert len([c for c in COMMANDS if not c.id.startswith('voice.')]) == 59
+    assert len([c for c in COMMANDS if not c.id.startswith(('voice.', 'ai.'))]) == 59
     assert len([c for c in COMMANDS if c.id.startswith('voice.')]) == 10
     for c in COMMANDS:
         if c.id.startswith('voice.'):

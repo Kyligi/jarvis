@@ -25,7 +25,8 @@ class VoiceBridge(QObject):
         except (OSError, ValueError, TypeError, KeyError):
             value = config.VoiceConfig()
             self.warning = 'Configuration vocale invalide : fichier conservé, valeurs par défaut.'
-        self.controller = VoiceController(value, listener=self.changed.emit)
+        self.controller = VoiceController(value, listener=self.changed.emit,
+                                          allow_conversation=lambda: self.bus.conversation.config.enabled)
         self.action.connect(self.handle)
         self.listener = self.action.emit
         commands.listener = self.listener
@@ -35,11 +36,19 @@ class VoiceBridge(QObject):
         self.active_command = False
         self.command_result = ''
         self.bus.result.connect(self.result)
+        self.bus.ai_event.connect(self.ai_changed)
         self.bus.completed.connect(self.finished)
         self.timer = QTimer(self)
         self.timer.setInterval(250)
         self.timer.timeout.connect(self.controller.expire)
         self.timer.start()
+
+    @Slot(object)
+    def ai_changed(self, event):
+        if event['kind'] == 'cleared':
+            self.controller.cancel()
+            self.controller.last_response = ''
+            self.command_result = ''
 
     @Slot()
     def toggle(self):
@@ -96,7 +105,8 @@ class VoiceBridge(QObject):
         c = self.controller
         if action == 'listen':
             # This request's own registry worker may still be finishing.
-            c.toggle()
+            if not self.bus.busy or not self.active_command:
+                c.toggle()
         elif action == 'stop':
             c.stop.set()
         elif action in ('quiet', 'disable'):
@@ -177,7 +187,7 @@ class VoicePage(QWidget):
         self.active = False
         self.body = QVBoxLayout(self)
         self.body.addWidget(label('Voix locale', 'heading'))
-        self.body.addWidget(label('PipeWire → Whisper local → registre Jarvis → Piper OHF → PipeWire', 'muted'))
+        self.body.addWidget(label('PipeWire → Whisper → validation → commandes / IA locale → Piper → PipeWire', 'muted'))
         self.notice = label(self.bridge.warning or 'Aucun téléchargement automatique. Audio temporaire supprimé. Aucun journal de transcription.', 'muted')
         self.notice.setWordWrap(True)
         self.body.addWidget(self.notice)
@@ -240,7 +250,7 @@ class VoicePage(QWidget):
         self.body.addLayout(form)
         row = QHBoxLayout()
         for title, callback in [('Périphériques', self.refresh), ('Enregistrer', self.save),
-                                ('Tester micro / transcription', lambda: self.bridge.controller.toggle(test_only=True)),
+                                ('Tester micro / transcription', self.test_capture),
                                 ('Tester la voix', lambda: self.bridge.controller.speak('Bonjour, ceci est un test vocal local.'))]:
             button = QPushButton(title)
             button.clicked.connect(callback)
@@ -251,6 +261,10 @@ class VoicePage(QWidget):
         self.runner = self.reader
         self.reader.result.connect(self.receive_devices)
         self.reader.failed.connect(lambda _: self.notice.setText('PipeWire indisponible : vérifier la session audio.'))
+
+    def test_capture(self):
+        if not self.context.commands.busy:
+            self.bridge.controller.toggle(test_only=True)
 
     def choose_model(self):
         path, _ = QFileDialog.getOpenFileName(self, 'Modèle Whisper multilingue',

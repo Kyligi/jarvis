@@ -37,6 +37,9 @@ class JarvisWindow(QWidget):
         layout.addWidget(self.voice_controls)
         self.console = CommandConsole(self.context.commands)
         layout.addWidget(self.console, 1)
+        self.ai_status = label('IA locale · ' + self.context.commands.conversation.config.model, 'muted')
+        layout.addWidget(self.ai_status)
+        self.context.commands.ai_event.connect(self.ai_update)
         # Attributs de compatibilité utilisés par les tests et appelants V1.0.
         self.output = self.console.output
         self.command = self.console.command
@@ -45,6 +48,13 @@ class JarvisWindow(QWidget):
         self.command.setFocus()
         self.setMinimumSize(760, 620)
         self.resize(760, 680)
+
+    @Slot(object)
+    def ai_update(self, event):
+        if event['kind'] in ('waiting', 'progress'):
+            self.ai_status.setText('IA locale · génération en cours…')
+        elif event['kind'] in ('idle', 'stopped', 'cleared'):
+            self.ai_status.setText('IA locale · ' + self.context.commands.conversation.config.model)
 
     @Slot()
     def run_command(self):
@@ -62,7 +72,7 @@ class JarvisWindow(QWidget):
     @Slot(str)
     def open_page(self, name):
         self.open_hud()
-        self.hud.navigation.setCurrentRow(8 if name == 'voice' else 7 if name == 'scenarios' else 4)
+        self.hud.navigation.setCurrentRow(9 if name == 'assistant' else 8 if name == 'voice' else 7 if name == 'scenarios' else 4)
         if name.startswith('modes:'):
             page = self.hud.pages[4]
             page.tabs.setCurrentIndex(page.mode_names.index(name.split(':', 1)[1]))

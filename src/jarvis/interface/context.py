@@ -50,10 +50,21 @@ class CommandBus(QObject):
     started = Signal(str)
     page_requested = Signal(str)
     scenario_progress = Signal(object)
+    ai_event = Signal(object)
 
     def __init__(self, parent=None, executor=None):
         super().__init__(parent)
         self.executor = executor or execute
+        from jarvis.ai import config as ai_config
+        from jarvis.ai.conversation import Conversation
+        self.ai_warning = ''
+        try:
+            configuration = ai_config.load()
+        except (OSError, ValueError, TypeError, KeyError):
+            configuration = ai_config.AIConfig()
+            self.ai_warning = 'Configuration IA invalide : fichier conservé ; IA désactivée.'
+        self.conversation = Conversation(configuration, listener=self.ai_event.emit)
+        self.inference_available = lambda: True
         self.runner = Runner(self)
         self.runner.result.connect(self.result)
         self.runner.failed.connect(self.failure)
@@ -66,12 +77,24 @@ class CommandBus(QObject):
         if not text:
             return False
         resolved = resolve(text)
+        identifier = resolved.command.id if resolved else 'unknown'
+        if identifier in {'ai.stop', 'ai.cancel', 'ai.clear', 'ai.disable'}:
+            from jarvis.ai.commands import route
+            self.result.emit(route(self.conversation, text, self.executor))
+            return True
         if resolved and resolved.command.id in {"scenarios.cancel", "scenarios.status", "voice.stop", "voice.disable", "voice.quiet", "voice.status", "voice.wake_off"}:
             self.result.emit(resolved.run())
             return True
         if self.busy:
             return False
-        if not self.runner.start(lambda: self.executor(text)):
+        if resolved is None and not self.inference_available():
+            self.result.emit('Attendre la fin de la capture/transcription ou de la synthèse avant l’inférence IA.')
+            return False
+        from jarvis.ai.commands import route
+        # Reserve the turn before launching the worker, so an immediate Stop cannot be lost.
+        if resolved is None:
+            self.conversation.prepare()
+        if not self.runner.start(lambda: route(self.conversation, text, self.executor)):
             return False
         identifier = resolved.command.id if resolved else "unknown"
         if identifier in {"modes.travail", "modes.gaming", "modes.etudes"}:
@@ -79,7 +102,9 @@ class CommandBus(QObject):
         self.busy = True
         self.busy_changed.emit(True)
         self.started.emit(identifier)
-        if identifier == "scenarios.open":
+        if identifier in {'ai.open', 'ai.talk'}:
+            self.page_requested.emit('assistant')
+        elif identifier == "scenarios.open":
             self.page_requested.emit("scenarios")
         elif identifier == "modes.configure" and resolved.arguments[0] in {"travail", "gaming", "etudes"}:
             self.page_requested.emit("modes:" + resolved.arguments[0])
@@ -128,6 +153,10 @@ class AppContext(QObject):
         engine.listeners.append(self.scenario_listener)
         from jarvis.interface.voice import VoiceBridge
         self.voice = VoiceBridge(self)
+        from jarvis.voice.controller import State
+        self.commands.inference_available = lambda: self.voice.controller.snapshot.state in (
+            State.IDLE, State.ERROR, State.EXECUTING, State.AWAITING_CONFIRMATION)
+
         self.preference_runner = Runner(self)
         self.preference_runner.result.connect(self.apply_preferences)
         self.preference_runner.failed.connect(self.preferences_failed)
@@ -159,6 +188,7 @@ class AppContext(QObject):
         if self.stopped:
             return
         self.stopped = True
+        self.commands.conversation.stop()
         self.voice.shutdown()
         self.scenario_engine.cancel()
         self.monitor.shutdown()

@@ -30,8 +30,9 @@ class Snapshot:
 
 class VoiceController:
     def __init__(self, config=None, capture=None, stt=None, tts=None, listener=lambda event: None,
-                 clock=time.monotonic):
+                 clock=time.monotonic, allow_conversation=lambda: False):
         self.config = config or VoiceConfig()
+        self.allow_conversation = allow_conversation
         self.capture = capture or PipeWireCapture()
         self.stt = stt or WhisperCLI()
         self.tts = tts or PiperCLI()
@@ -142,16 +143,16 @@ class VoiceController:
                     text, resolved = candidate, match
             if test_only:
                 self.emit(State.IDLE, text=text, message=result.warning + ' Test uniquement : aucune exécution.')
-            elif resolved is None:
+            elif resolved is None and not self.allow_conversation():
                 self.emit(State.ERROR, text=text, message='Commande inconnue : aucune approximation exécutée.')
-            elif resolved.command.id in {'scenarios.confirm', 'windows.confirm'}:
+            elif resolved and resolved.command.id in {'scenarios.confirm', 'windows.confirm', 'ai.confirm'}:
                 self.emit(State.ERROR, text=text, message='Confirmation sensible : saisir le code dans la console.')
             else:
                 uncertain = result.confidence is None or result.confidence < .75
                 self.pending = (text, self.clock() + 30)
                 self.emit(State.AWAITING_CONFIRMATION, text=text,
                           message=result.warning + ' ' + ('Transcription incertaine. ' if uncertain else '') +
-                          f'Vérifier puis valider : {resolved.command.name} (30 s).')
+                          f'Vérifier puis valider : {resolved.command.name if resolved else "interprétation IA locale, sans autorisation d’action"} (30 s).')
 
     def take_pending(self):
         with self.lock:

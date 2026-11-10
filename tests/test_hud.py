@@ -76,15 +76,15 @@ def select(qapp, hud, index):
 
 def test_creation_navigation_and_shared_services(qapp, ui):
     mini, hud, context, service, collector, executor = ui
-    assert len(hud.pages) == 9
+    assert len(hud.pages) == 10
     assert mini.dashboard.monitor is hud.pages[1].dashboard.monitor is context.monitor
     assert mini.console.bus is hud.console.bus is context.commands
     assert collector.collect.call_count == 1
     assert len(hud.pages[1].dashboard.graph.cpu) <= 1
-    for index in range(9):
+    for index in range(10):
         select(qapp, hud, index)
         assert hud.stack.currentIndex() == index
-        assert [p.active for p in hud.pages] == [i == index for i in range(9)]
+        assert [p.active for p in hud.pages] == [i == index for i in range(10)]
         assert hud.pages[1].timer.isActive() == (index == 1)
     assert collector.collect.call_count == 1
 
@@ -252,7 +252,7 @@ def test_slow_page_does_not_block_navigation(qapp, ui, monkeypatch):
 def test_render_all_pages(qapp, ui, tmp_path):
     mini, hud, context, _, _, _ = ui
     context.preferences = Preferences(False, 2)
-    for index in range(9):
+    for index in range(10):
         select(qapp, hud, index)
         hud.animation.stop()
         hud.effect.setOpacity(1)

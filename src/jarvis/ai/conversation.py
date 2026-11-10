@@ -60,9 +60,16 @@ class Conversation:
         self.cancelled = threading.Event()
         self.lock = threading.RLock()
         self.turn_lock = threading.Lock()
+        self.prepared = False
 
     def emit(self, kind, **data):
         self.listener({'kind': kind, **data})
+
+    def prepare(self):
+        with self.lock:
+            self.cancelled = threading.Event()
+            self.pending = None
+            self.prepared = True
 
     def stop(self):
         with self.lock:
@@ -133,8 +140,12 @@ class Conversation:
             return 'Une génération est déjà en cours.'
         try:
             with self.lock:
-                self.cancelled = threading.Event()
+                if not self.prepared:
+                    self.cancelled = threading.Event()
+                self.prepared = False
                 self.pending = None
+            if self.cancelled.is_set():
+                raise Cancelled('Génération annulée.')
             if not self.config.enabled:
                 return "IA locale désactivée. Utiliser « active IA » ou une commande de l’aide."
             if not isinstance(text, str) or not text.strip() or len(text) > 2048:
@@ -200,8 +211,11 @@ class Conversation:
             result = '\n\n'.join(results) if calls else 'Conversation IA — non vérifiée\n' + proposal['reply']
             # Tool output NEVER enters a subsequent model request, including history.
             memory = ('Outils demandés : ' + json.dumps(calls, ensure_ascii=False)) if calls else proposal['reply']
-            self.remember(text, memory)
-            self.emit('answer', text=result)
+            with self.lock:
+                if self.cancelled.is_set():
+                    raise Cancelled('Génération annulée.')
+                self.remember(text, memory)
+                self.emit('answer', text=result)
             return result
         except Cancelled:
             return 'Génération annulée. Aucune nouvelle action autorisée.'

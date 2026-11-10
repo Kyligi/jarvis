@@ -25,7 +25,11 @@ def route(session, text, executor):
         return session.clear()
     if action in ('stop', 'cancel'):
         return session.stop()
-    if action in ('enable', 'disable'):
+    if action == 'disable':
+        session.clear()
+        session.config = replace(session.config, enabled=False)
+        return 'IA locale désactivée pour cette session.'
+    if action == 'enable':
         session.configure(replace(session.config, enabled=action == 'enable'))
         return 'IA locale ' + ('activée' if action == 'enable' else 'désactivée') + ' pour cette session.'
     if action == 'confirm':

@@ -142,7 +142,7 @@ def test_never_approximate_or_execute_invalid_transcripts(text):
 
 def test_all_command_names_and_help_preserved():
     from jarvis.registry import COMMANDS, help_text, resolve
-    assert len(COMMANDS) == 69
+    assert len([c for c in COMMANDS if not c.id.startswith('ai.')]) == 69
     for command in COMMANDS:
         assert command.name in help_text()
         match = resolve(command.name)

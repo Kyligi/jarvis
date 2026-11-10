@@ -58,13 +58,25 @@ class CommandConsole(QWidget):
         self.cancel_scenario = QPushButton("Annuler scénario")
         self.cancel_scenario.clicked.connect(lambda: bus.submit("annule scénario"))
         row.addWidget(self.cancel_scenario)
+        self.cancel_ai = QPushButton('Arrêter IA')
+        self.cancel_ai.clicked.connect(lambda: bus.submit('arrête génération'))
+        row.addWidget(self.cancel_ai)
         layout.addLayout(row)
         self.status = label("Prêt  ·  commandes locales autorisées", "muted")
         layout.addWidget(self.status)
         bus.result.connect(self.show_result)
+        bus.ai_event.connect(self.ai_changed)
         bus.busy_changed.connect(self.set_busy)
         bus.scenario_progress.connect(self.scenario_changed)
         self.set_busy(bus.busy)
+
+    @Slot(object)
+    def ai_changed(self, event):
+        if event['kind'] == 'cleared':
+            self.output.clear()
+            self.has_response = False
+        elif event['kind'] in ('waiting', 'progress'):
+            self.status.setText('IA locale · génération en cours…')
 
     @Slot()
     def submit(self):
