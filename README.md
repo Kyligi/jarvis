@@ -282,3 +282,7 @@ Validation matérielle disponible : Radeon 860M, RADV/Mesa 26.2.5, Vulkan 1.4 su
 l’hôte. Cela ne prouve pas l’utilisation de Vulkan par Ollama. Le benchmark
 facultatif `uv run python tools/ai_benchmark.py --run` ne télécharge rien et
 n’exécute aucun outil métier. Voir [les limites de validation](docs/VALIDATION.md).
+
+## Documentation des versions
+
+- [V1.7 — Intelligence contextuelle](docs/V1.7.md)

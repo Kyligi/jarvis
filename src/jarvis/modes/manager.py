@@ -78,7 +78,41 @@ def launch(candidates, args=None):
 
     return None
 
+def launch_terminal_on_workspace(workspace, args=None):
+    """Lance le terminal si aucun n'existe sur ce workspace."""
 
+    try:
+        existing = existing_application([settings.terminal])
+    except WindowError:
+        return "Inventaire indisponible : lancement évité"
+
+    # Une fenêtre présente sur un autre workspace
+    # ne doit pas empêcher la création du terminal.
+    for window in existing:
+        window_workspace = getattr(window, "workspace", None)
+
+        if isinstance(window_workspace, dict):
+            window_workspace = window_workspace.get("id")
+
+        if window_workspace == workspace:
+            return (
+                f"Terminal déjà ouvert sur "
+                f"workspace {workspace}"
+            )
+
+    executable = shutil.which(settings.terminal)
+
+    if not executable:
+        return "Terminal introuvable"
+
+    subprocess.Popen(
+        [executable, *(args or [])],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+    return f"Terminal lancé sur workspace {workspace}"
 def activate_mode(name):
     if name not in MODES:
         return "Mode inconnu."
@@ -105,14 +139,6 @@ def activate_mode(name):
             RuntimeError) as error:
         return f"Erreur Hyprland : {error}"
 
-    # Si le même mode est déjà actif,
-    # on ne relance pas toutes les applications.
-    if current_mode() == name:
-        return (
-            f"Mode {name.capitalize()} déjà actif.\n"
-            f"Workspace {profile['workspace']} affiché."
-        )
-
     launched = []
 
     if name == "travail":
@@ -131,9 +157,13 @@ def activate_mode(name):
             if project_path else []
         )
 
-        if launch([settings.terminal], terminal_args):
-            launched.append("Foot")
+        terminal_result = launch_terminal_on_workspace(
+            profile["workspace"],
+            terminal_args,
+        )
 
+        if terminal_result:
+            launched.append(terminal_result)
     elif name == "gaming":
         if launch([settings.gaming]):
             launched.append("Steam")

@@ -23,9 +23,12 @@ def test_modes_launch_and_no_duplicate(name, workspace, monkeypatch):
         assert popen.call_args.args[0] == ["/usr/bin/gtk-launch", "notion"]
         assert launch.call_args.args[0] == modes.settings.browsers
     count = launch.call_count
-    assert "déjà actif" in modes.activate_mode(name)
-    assert launch.call_count == count
 
+    result = modes.activate_mode(name)
+
+    assert "MODE" in result
+    assert launch.call_count > count
+    assert modes.current_mode() == name
 
 def test_mode_hypr_failure_does_not_save_or_launch(monkeypatch):
     monkeypatch.setattr(modes, "switch_workspace", Mock(side_effect=RuntimeError("refusé")))
@@ -43,6 +46,13 @@ def test_mode_untrusted_project_not_opened(project, tmp_path, monkeypatch):
     monkeypatch.setattr(modes, "switch_workspace", Mock())
     launch = Mock(return_value=None)
     monkeypatch.setattr(modes, "launch", launch)
+    terminal_launch = Mock(return_value="Terminal déjà ouvert")
+
+    monkeypatch.setattr(
+        modes,
+        "launch_terminal_on_workspace",
+        terminal_launch,
+    )
     modes.activate_mode("travail")
     assert launch.call_args_list[0].args[1] == []
 
@@ -73,3 +83,28 @@ def test_corrupt_mode_state():
     assert modes.current_mode() is None
     modes.STATE_PATH.write_text("[]")
     assert modes.current_mode() is None
+
+def test_launch_reuses_existing_application(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    existing = SimpleNamespace(app="code")
+
+    detector = Mock(return_value=[existing])
+    launcher = Mock()
+
+    monkeypatch.setattr(
+        modes,
+        "existing_application",
+        detector,
+    )
+    monkeypatch.setattr(
+        modes.subprocess,
+        "Popen",
+        launcher,
+    )
+
+    result = modes.launch(["code"])
+
+    assert "déjà ouvert" in result
+    launcher.assert_not_called()

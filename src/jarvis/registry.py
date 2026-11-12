@@ -102,8 +102,51 @@ def help_text() -> str:
                 seen.add(normalize(alias))
         if aliases:
             lines.append("  Alias : " + " | ".join(aliases))
-    return "\n".join(lines)
 
+    # Fonctionnalités du HUD : elles ne constituent
+    # pas de nouvelles commandes du registre.
+    lines.extend([
+        "",
+        "FONCTIONNALITÉS V1.7 — HUD",
+        "",
+        "Contexte actuel",
+        "  Accueil : application active, workspace,",
+        "  projet en cours et mode enregistré.",
+        "",
+        "Suggestions intelligentes",
+        "  Accueil : suggestions selon le contexte,",
+        "  diagnostics et applications manquantes.",
+        "  Actions : Prévisualiser, Exécuter, Ignorer.",
+        "  L'exécution nécessite une confirmation.",
+        "",
+        "Restauration des environnements",
+        "  Les commandes mode Travail, mode Gaming",
+        "  et mode Etudes permettent de restaurer",
+        "  les applications manquantes.",
+        "  Foot est vérifié sur le workspace Travail.",
+        "  Les profils personnalisés conservent",
+        "  leurs confirmations de scénarios.",
+        "",
+        "Workflows supervisés",
+        "  HUD > Scénarios > Workflows supervisés",
+        "  Plans : Préparer ma session de travail ;",
+        "  Sauvegarder et vérifier ma session.",
+        "  Actions : Démarrer, Continuer, Annuler.",
+        "  Chaque étape est exécutée séparément.",
+        "  La continuation nécessite ton accord.",
+        "",
+        "Résultats et sécurité",
+        "  SUCCESS : réussite structurée vérifiée.",
+        "  FAILED : exécution échouée.",
+        "  CONFIRMATION_REQUIRED : validation requise.",
+        "  UNKNOWN : résultat à vérifier manuellement.",
+        "  La fermeture du HUD conserve le workflow",
+        "  pendant la session Jarvis.",
+        "",
+        "Documentation : docs/V1.7.md",
+    ])
+
+    return "\n".join(lines)
 
 def exact(id: str, name: str, description: str, aliases: tuple[str, ...],
           handler: Handler, category: str) -> Command:

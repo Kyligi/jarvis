@@ -28,6 +28,7 @@ from jarvis.interface.pages.system import SystemPage
 from jarvis.interface.pages.windows import WindowsPage
 from jarvis.interface.voice import VoiceControls, VoicePage
 from jarvis.interface.pages.memory import MemoryPage
+from jarvis.interface.workflow_panel import WorkflowPanel
 from jarvis.interface.pages.conversations import ConversationsPage
 
 class HudWindow(QMainWindow):
@@ -97,6 +98,13 @@ class HudWindow(QMainWindow):
             MemoryPage(context),
             ConversationsPage(context),
         ]
+        self.workflow_panel = WorkflowPanel(
+            context,
+            self.pages[7],
+        )
+        self.pages[7].layout().addWidget(
+            self.workflow_panel
+        )
         for page in self.pages:
             scroll = QScrollArea()
             scroll.setWidgetResizable(True)

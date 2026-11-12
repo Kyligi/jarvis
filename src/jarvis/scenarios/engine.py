@@ -27,6 +27,19 @@ class Engine:
         with self._lock:
             return deepcopy(self._state)
 
+    def confirmation_pending(self) -> bool:
+        """Indique si un scénario attend une confirmation valide.
+
+        Ne révèle jamais le jeton de confirmation.
+        """
+        with self._lock:
+            approval = self._approval
+
+            if approval is None:
+                return False
+
+            return time.monotonic() <= approval[1]
+
     def cancel(self):
         with self._lock:
             self._approval = None
